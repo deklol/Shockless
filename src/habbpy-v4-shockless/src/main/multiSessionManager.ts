@@ -33,7 +33,7 @@ import { ClientLibraryStore } from "./clientLibrary.js";
 import { accountStoreSummary, clearEncryptedAccountStore, readEncryptedAccountStore, writeEncryptedAccountStore } from "./encryptedAccountStore.js";
 import { lookupOriginsUser } from "./originsUserLookup.js";
 import { readRelayLogDeltaSnapshot, readRelayLogSnapshot } from "./relayLog.js";
-import { readShocklessSettings, ShocklessEmbedController } from "./shocklessEmbed.js";
+import { readShocklessSettings, ShocklessEmbedController, writeShocklessSettings } from "./shocklessEmbed.js";
 import { detectAcceptedVersionCheckBuild } from "./versionCheckBuild.js";
 import type { PluginRelayPolicy } from "../shared/pluginRelayHooks.js";
 
@@ -255,23 +255,47 @@ export class MultiSessionManager {
     const profile = this.options.library.selectedProfile();
     if (!profile?.ready || !profile.profileRoot) return { build: null, updated: false, tried: [] };
     const settings = readShocklessSettings(this.options.appDataPath);
-    const manualOverride = settings.activeProfileId === profile.id && settings.versionCheckBuild !== null;
-    if (manualOverride) return { build: settings.versionCheckBuild, updated: false, tried: [] };
+    const settingBuild = settings.activeProfileId === profile.id ? settings.versionCheckBuild : null;
     const detected = await detectAcceptedVersionCheckBuild({
       profileRoot: profile.profileRoot,
-      preferredBuilds: [profile.versionCheckBuild],
+      preferredBuilds: [settingBuild, profile.versionCheckBuild],
     });
-    if (!detected.build || detected.build === profile.versionCheckBuild) {
-      return { build: detected.build ?? profile.versionCheckBuild, updated: false, tried: detected.tried, ...(detected.error ? { error: detected.error } : {}) };
+    if (!detected.build) {
+      return {
+        build: settingBuild ?? profile.versionCheckBuild,
+        updated: false,
+        tried: detected.tried,
+        ...(detected.error ? { error: detected.error } : {}),
+      };
     }
+
+    let updated = false;
+    let error: string | undefined;
+    if (settingBuild !== null && settingBuild !== detected.build) {
+      try {
+        writeShocklessSettings(this.options.appDataPath, {
+          activeProfileId: profile.id,
+          versionCheckBuild: detected.build,
+        });
+        updated = true;
+      } catch (writeError) {
+        error = errorMessage(writeError);
+        console.warn(`[habbpy-v4] failed to persist detected VERSIONCHECK setting ${detected.build}: ${error}`);
+      }
+    }
+
+    if (detected.build === profile.versionCheckBuild) {
+      return { build: detected.build, updated, tried: detected.tried, ...(error ? { error } : {}) };
+    }
+
     const profilePath = join(profile.profileRoot, "profile.json");
     try {
       const parsed = JSON.parse(readFileSync(profilePath, "utf8")) as Record<string, unknown>;
       parsed.versionCheckBuild = detected.build;
       writeFileSync(profilePath, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
-      return { build: detected.build, updated: true, tried: detected.tried };
-    } catch (error) {
-      const message = errorMessage(error);
+      return { build: detected.build, updated: true, tried: detected.tried, ...(error ? { error } : {}) };
+    } catch (profileError) {
+      const message = errorMessage(profileError);
       console.warn(`[habbpy-v4] failed to persist detected VERSIONCHECK build ${detected.build}: ${message}`);
       return { build: detected.build, updated: false, tried: detected.tried, error: message };
     }

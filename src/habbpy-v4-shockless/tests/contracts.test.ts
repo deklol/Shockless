@@ -13,6 +13,7 @@ import {
   buildShocklessEmbedUrl,
   embeddedResizablePresentation,
   normalizeOriginsExternalVariables,
+  readShocklessSettings,
   writeShocklessSettings,
 } from "../src/main/shocklessEmbed";
 import { ClientLibraryStore, findProfileRootsInSource } from "../src/main/clientLibrary";
@@ -362,6 +363,33 @@ test("external variables normalization keeps live gamedata dynamic", () => {
   assert.match(normalized, /dynamic\.download\.url=https:\/\/example\.test\/dyn\//);
   assert.match(normalized, /furnidata\.load\.url=furnidata\.txt/);
   assert.match(normalized, /productdata\.load\.url=productdata\.txt/);
+});
+
+test("external variables normalization applies accepted VERSIONCHECK build", () => {
+  const normalized = normalizeOriginsExternalVariables("client.version.id=401\rflash.dynamic.download.url=https://example.test/dyn/", 1129);
+  assert.match(normalized, /client\.version\.id=1129/);
+  assert.doesNotMatch(normalized, /client\.version\.id=401/);
+});
+
+test("Shockless launch settings drop stale VERSIONCHECK overrides", () => {
+  const appData = mkdtempSync(join(tmpdir(), "habbpy-v4-stale-versioncheck-"));
+  try {
+    const saved = writeShocklessSettings(appData, {
+      activeProfileId: "release324",
+      versionCheckBuild: 1128,
+    });
+    assert.equal(saved.versionCheckBuild, null);
+    assert.equal(readShocklessSettings(appData).versionCheckBuild, null);
+
+    const fresh = writeShocklessSettings(appData, {
+      activeProfileId: "release324",
+      versionCheckBuild: 1129,
+    });
+    assert.equal(fresh.versionCheckBuild, 1129);
+    assert.equal(readShocklessSettings(appData).versionCheckBuild, 1129);
+  } finally {
+    rmSync(appData, { recursive: true, force: true });
+  }
 });
 
 test("client import classifier distinguishes compiled clients from imported profiles", () => {

@@ -31,6 +31,7 @@ const ORIGINS_GAMEDATA_URLS: Readonly<Record<string, string>> = {
   [ORIGINS_FURNIDATA_FILE]: "https://origins.habbo.com/gamedata/furnidata/1",
   [ORIGINS_PRODUCTDATA_FILE]: "https://origins.habbo.com/gamedata/productdata/1",
 };
+const STALE_VERSION_CHECK_BUILDS = new Set([401, 1124, 1125, 1126, 1127, 1128]);
 
 interface RuntimeProfilePaths {
   readonly client: string;
@@ -230,9 +231,13 @@ export function buildShocklessEmbedUrl(baseUrl: string, context: LaunchContext):
   return url.toString();
 }
 
-export function normalizeOriginsExternalVariables(text: string): string {
+export function normalizeOriginsExternalVariables(text: string, versionCheckBuild?: number | null): string {
   const lines = text.split(/\r\n|\r|\n/).filter((line, index, all) => line.length > 0 || index < all.length - 1);
   const keys = new Set(lines.map(variableKey).filter((key): key is string => Boolean(key)));
+  const normalizedVersionCheckBuild = positiveInteger(versionCheckBuild);
+  if (normalizedVersionCheckBuild !== null) {
+    setExternalVariable(lines, keys, "client.version.id", String(normalizedVersionCheckBuild));
+  }
   const flashDynamicDownload = valueForExternalVariable(lines, "flash.dynamic.download.url");
   if (!keys.has("dynamic.download.url") && flashDynamicDownload) lines.push(`dynamic.download.url=${flashDynamicDownload}`);
   if (!keys.has("furnidata.load.url")) lines.push(`furnidata.load.url=${ORIGINS_FURNIDATA_FILE}`);
@@ -317,7 +322,7 @@ class EmbeddedStaticServer {
       .find((candidate) => candidate && existsSync(candidate) && statSync(candidate).isFile());
     if (match) {
       if (rootKey === "client" && requestPath.toLowerCase() === "external_variables.txt") {
-        sendText(response, 200, normalizeOriginsExternalVariables(readFileSync(match, "utf8")));
+        sendText(response, 200, normalizeOriginsExternalVariables(readFileSync(match, "utf8"), context.settings.versionCheckBuild));
         return;
       }
       sendFile(response, match);
@@ -646,7 +651,7 @@ export function readShocklessSettings(appDataPath: string): ShocklessSettings {
       activeProfileId: typeof parsed.activeProfileId === "string" ? parsed.activeProfileId : null,
       resizablePresentation: typeof parsed.resizablePresentation === "boolean" ? parsed.resizablePresentation : null,
       customHotelView: typeof parsed.customHotelView === "boolean" ? parsed.customHotelView : null,
-      versionCheckBuild: positiveInteger(parsed.versionCheckBuild),
+      versionCheckBuild: normalizeSettingsVersionCheckBuild(parsed.versionCheckBuild),
     };
   } catch {
     return { activeProfileId: null, resizablePresentation: null, customHotelView: null, versionCheckBuild: null };
@@ -688,7 +693,7 @@ export function writeShocklessSettings(appDataPath: string, patch: ShocklessSett
         ? current.versionCheckBuild
         : patch.versionCheckBuild === null
           ? null
-          : positiveInteger(patch.versionCheckBuild),
+          : normalizeSettingsVersionCheckBuild(patch.versionCheckBuild),
   };
   const settingsPath = join(appDataPath, "ShocklessEngine", "settings.json");
   mkdirSync(dirname(settingsPath), { recursive: true });
@@ -719,6 +724,15 @@ function valueForExternalVariable(lines: readonly string[], key: string): string
   const prefix = `${key.toLowerCase()}=`;
   const line = lines.find((entry) => entry.toLowerCase().startsWith(prefix));
   return line ? line.slice(line.indexOf("=") + 1).trim() : null;
+}
+
+function setExternalVariable(lines: string[], keys: Set<string>, key: string, value: string): void {
+  const normalizedKey = key.toLowerCase();
+  const index = lines.findIndex((line) => variableKey(line) === normalizedKey);
+  const nextLine = `${key}=${value}`;
+  if (index >= 0) lines[index] = nextLine;
+  else lines.push(nextLine);
+  keys.add(normalizedKey);
 }
 
 function safeJoin(root: string, requestPath: string): string | null {
@@ -791,6 +805,11 @@ function isTcpOpen(host: string, port: number, timeoutMs: number): Promise<boole
 function positiveInteger(value: unknown): number | null {
   const parsed = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function normalizeSettingsVersionCheckBuild(value: unknown): number | null {
+  const parsed = positiveInteger(value);
+  return parsed !== null && !STALE_VERSION_CHECK_BUILDS.has(parsed) ? parsed : null;
 }
 
 function errorMessage(error: unknown): string {
