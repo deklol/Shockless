@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "protocol": "shockless-profile-v1",
+  "upstream": {
+    "repository": "https://github.com/ProjectorRays/ProjectorRays",
+    "version": "0.2.0",
+    "commit": "8a3d3b4211575170276fc6be350b6b52e96d4750",
+    "license": "MPL-2.0"
+  },
+  "binary": "shockless-projectorrays-0.2.0.exe",
+  "sha256": "e54bb5239a5fb201ca5a3e77ad7b18ebfb0d06527fb5114a2f074d9ead102733",
+  "sourceSha256": "c064188aed25114afa4c4cbf233bd16aed90749f45ce9a5fa4a74f97eedd0f7d",
+  "capabilities": [
+    "deterministic-source-order",
+    "exact-progress",
+    "runtime-artifacts-only"
+  ]
+}

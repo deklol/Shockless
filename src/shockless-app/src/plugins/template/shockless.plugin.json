@@ -1,0 +1,61 @@
+{
+  "id": "sample-plugin",
+  "name": "Sample Plugin",
+  "version": "1.0.0",
+  "author": "local",
+  "description": "A local Shockless plugin template.",
+  "entry": "plugin.js",
+  "icon": "terminal",
+  "category": "developer",
+  "permissions": ["ui.panel", "console.commands", "packet.read", "storage"],
+  "ui": {
+    "preview": [
+      { "type": "header", "text": "Sample Plugin", "level": 3 },
+      { "type": "text", "text": "This preview is rendered by the Shockless schema renderer." },
+      { "type": "kv", "rows": [
+        { "key": "UI", "value": "Schema-rendered" },
+        { "key": "Runtime", "value": "Worker sandbox" }
+      ] }
+    ],
+    "settings": [
+      { "type": "section", "title": "Settings", "children": [
+        { "type": "toggle", "id": "logPackets", "label": "Log Server Packets", "description": "Writes packet names to the plugin log when enabled.", "defaultValue": true, "action": "settings.logPackets" },
+        { "type": "textInput", "id": "prefix", "label": "Log Prefix", "defaultValue": "sample", "action": "settings.prefix" }
+      ] }
+    ]
+  },
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Sample Panel",
+      "enabledByDefault": true,
+      "summary": "Starter panel rendered by the shared schema renderer.",
+      "layout": [
+        { "type": "header", "text": "Sample Panel", "level": 3 },
+        { "type": "notice", "tone": "info", "title": "Schema UI", "text": "Add controls here with JSON: button grids, toggles, fields, selectable tables, logs, and sections." },
+        { "type": "buttonGrid", "columns": 2, "buttons": [
+          { "label": "Ping Plugin", "action": "panel.ping", "variant": "primary" },
+          { "label": "Clear Status", "action": "panel.clear" }
+        ] },
+        { "type": "table", "label": "Example Rows", "columns": [
+          { "key": "key", "label": "Key" },
+          { "key": "name", "label": "Name" },
+          { "key": "value", "label": "Value" }
+        ], "rows": [
+          { "key": "renderer", "name": "Renderer", "value": "Schema" },
+          { "key": "actions", "name": "Actions", "value": "ui.onAction" }
+        ], "rowKey": "key", "selectedRowKey": "renderer", "rowAction": "panel.selectRow", "maxRows": 20 },
+        { "type": "kv", "rows": [
+          { "key": "Last Action", "value": "-" }
+        ] }
+      ]
+    }
+  ],
+  "commands": [
+    { "name": "sample.ping", "label": "Sample Ping", "description": "Writes a sample plugin log line.", "usage": "sample.ping" }
+  ],
+  "hotkeys": [
+    { "id": "sample-ping", "key": "F8", "command": "sample.ping", "label": "Ping Sample Plugin", "enabledByDefault": false }
+  ]
+}

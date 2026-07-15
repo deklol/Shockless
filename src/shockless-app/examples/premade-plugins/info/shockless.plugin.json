@@ -1,0 +1,52 @@
+{
+  "id": "premade-info",
+  "name": "Info Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Info module.",
+  "entry": "plugin.js",
+  "icon": "info",
+  "category": "social",
+  "permissions": [
+    "ui.panel",
+    "ui.status",
+    "console.commands",
+    "events.room",
+    "engine.snapshot",
+    "events.packet",
+    "packet.read",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Info Panel",
+      "enabledByDefault": true,
+      "summary": "Compact account and room facts."
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Info Status",
+      "enabledByDefault": true,
+      "summary": "Account, room, inventory, and rights status."
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Info Commands",
+      "enabledByDefault": false,
+      "summary": "Request friends/badges/preferences, comfort toggles, badge override, and minigames once mapped."
+    }
+  ],
+  "commands": [
+    {
+      "name": "info.lookupPublicUser",
+      "label": "Lookup Public User",
+      "description": "Look up an explicit Habbo name through the official Origins public users API.",
+      "usage": "info.lookupPublicUser"
+    }
+  ],
+  "hotkeys": []
+}

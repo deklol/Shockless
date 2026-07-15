@@ -1,0 +1,49 @@
+{
+  "id": "premade-wall-item-anywhere",
+  "name": "Wall Item Anywhere Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Wall Item Anywhere module.",
+  "entry": "plugin.js",
+  "icon": "hammer",
+  "category": "automation",
+  "permissions": [
+    "ui.panel",
+    "engine.control",
+    "actions.wallItems",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Wall Item Anywhere Panel",
+      "enabledByDefault": true,
+      "summary": "Native Object Mover compatibility toggle and status.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Wall item anywhere",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Enables native wall item drag/drop outside visible wall bounds."
+        },
+        {
+          "type": "section",
+          "title": "Native placement",
+          "children": [
+            {
+              "type": "notice",
+              "tone": "info",
+              "text": "Click a wall item, press Move, drag it anywhere on the stage, then click to place."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "commands": [],
+  "hotkeys": []
+}

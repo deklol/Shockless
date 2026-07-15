@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plugin Authoring - Shockless</title>
+  <style>
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-goldfish.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-bold-goldfish.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    :root {
+      color-scheme: dark;
+      --font: "Volter Goldfish", "Segoe UI", Tahoma, sans-serif;
+      --font-read: "Segoe UI", Tahoma, Arial, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+      --bg: #050505;
+      --panel: #101010;
+      --panel-2: #171717;
+      --panel-3: #202020;
+      --line: #2b2b2b;
+      --text: #dedede;
+      --muted: #9a9a9a;
+      --dim: #656565;
+      --gold: #e3b23a;
+      --gold-dark: #9c7418;
+      --shadow: #000;
+      --bevel: inset 2px 2px 0 #2d2d2d, inset -2px -2px 0 #000;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font: 14px/1.55 var(--font-read);
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 12px),
+        linear-gradient(180deg, #0b0b0b 0%, #030303 100%);
+    }
+    a { color: inherit; }
+    code, pre { font-family: var(--mono); }
+    pre {
+      overflow: auto;
+      max-width: 100%;
+      padding: 14px;
+      background: #070707;
+      border: 1px solid var(--line);
+      box-shadow: var(--bevel);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+      display: block;
+      overflow-x: auto;
+      white-space: normal;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    th { background: var(--panel-2); color: var(--gold); text-align: left; }
+    .shell {
+      display: grid;
+      grid-template-columns: 276px minmax(0, 1120px);
+      gap: 14px;
+      min-height: 100vh;
+      justify-content: center;
+      padding: 12px;
+      max-width: 100%;
+    }
+    .sidebar {
+      min-width: 0;
+      position: sticky;
+      top: 12px;
+      height: calc(100vh - 24px);
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel);
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 8px;
+      margin-bottom: 12px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      box-shadow: var(--bevel);
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #f1c550, var(--gold-dark));
+      color: #111;
+      font: 700 20px/1 var(--font);
+      box-shadow: 0 0 0 2px #000, inset 2px 2px 0 rgba(255,255,255,.24), inset -2px -2px 0 #5b4108;
+    }
+    .brand strong {
+      display: block;
+      font: 700 15px/1 var(--font);
+      text-shadow: 2px 2px 0 #000;
+    }
+    .brand small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font: 9px/1 var(--font);
+    }
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+    .nav-link {
+      display: block;
+      padding: 10px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      border-left: 3px solid transparent;
+      box-shadow: var(--bevel);
+    }
+    .nav-link:hover,
+    .nav-link.active {
+      border-left-color: var(--gold);
+      background: #1d1d1d;
+    }
+    .nav-link span {
+      display: block;
+      color: #f1f1f1;
+      font: 700 10px/1.2 var(--font);
+      text-shadow: 2px 2px 0 #000;
+    }
+    .nav-link small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .content {
+      min-width: 0;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+    .hero-window,
+    .doc-window {
+      min-width: 0;
+      max-width: 100%;
+      background: var(--panel);
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+    }
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #171717;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--gold);
+      font: 700 9px/1 var(--font);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    h1, h2, h3 {
+      color: #f5f5f5;
+      line-height: 1.2;
+      text-shadow: 2px 2px 0 #000;
+    }
+    h1 {
+      margin: 0;
+      font: 700 24px/1.1 var(--font);
+    }
+    h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 21px;
+    }
+    h3 { margin-top: 22px; }
+    .status-pill,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      color: var(--text);
+      text-decoration: none;
+      background: #1a1a1a;
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+      font: 700 10px/1 var(--font);
+    }
+    .button.primary {
+      color: #111;
+      background: linear-gradient(180deg, #efc24b, #c79422);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(260px, .6fr);
+      gap: 14px;
+      padding: 18px;
+    }
+    .lead {
+      margin: 0;
+      max-width: 760px;
+      color: var(--text);
+      font-size: 16px;
+    }
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .path-card {
+      padding: 14px;
+      background: #090909;
+      border: 1px solid var(--line);
+      box-shadow: var(--bevel);
+    }
+    .path-card .label,
+    .path-card .hint {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .path-card code {
+      display: block;
+      margin: 10px 0;
+      color: var(--gold);
+      word-break: break-word;
+    }
+    .section-heading {
+      padding: 14px 16px 0;
+    }
+    .section-heading h2 {
+      margin-top: 0;
+    }
+    .doc-body {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      padding: 18px;
+    }
+    .doc-body a {
+      color: var(--gold);
+    }
+    .doc-body code {
+      color: #f0c85a;
+      background: #080808;
+      border: 1px solid #242424;
+      padding: 1px 4px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .doc-body pre code {
+      display: block;
+      padding: 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    .doc-body p,
+    .doc-body li {
+      color: var(--text);
+    }
+    .doc-body ul,
+    .doc-body ol {
+      margin: 10px 0 16px 22px;
+      padding: 0;
+    }
+    .doc-body li + li {
+      margin-top: 6px;
+    }
+    .doc-body blockquote {
+      margin: 16px 0;
+      padding: 10px 14px;
+      border-left: 3px solid var(--gold-dark);
+      background: #0b0b0b;
+      color: var(--muted);
+    }
+    .doc-body img {
+      max-width: 100%;
+      height: auto;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      padding: 0 18px 18px;
+    }
+    .doc-card {
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      border-left: 3px solid var(--gold-dark);
+      box-shadow: var(--bevel);
+    }
+    .doc-card:hover {
+      border-left-color: var(--gold);
+      background: #1d1d1d;
+    }
+    .doc-card span {
+      color: var(--gold);
+      font: 700 10px/1.1 var(--font);
+    }
+    .doc-card strong {
+      color: #efefef;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="index.html" aria-label="Shockless documentation home">
+        <span class="brand-mark">H</span>
+        <span><strong>Shockless</strong><small>Public docs</small></span>
+      </a>
+      <nav class="nav" aria-label="Documentation sections">
+        <a class="nav-link" href="index.html"><span>Home</span><small>Offline docs start page</small></a>
+<a class="nav-link" href="getting-started.html"><span>Getting Started</span><small>Run the portable app and import a profile</small></a>
+<a class="nav-link" href="building-from-source.html"><span>Build From Source</span><small>Install dependencies and package the app</small></a>
+<a class="nav-link active" href="plugin-authoring.html"><span>Plugin Authoring</span><small>Create and install user plugins</small></a>
+<a class="nav-link" href="plugin-api.html"><span>Plugin API</span><small>Complete plugin API reference</small></a>
+<a class="nav-link" href="console-commands.html"><span>Console Commands</span><small>Backtick console command usage</small></a>
+<a class="nav-link" href="multi-client.html"><span>Multi-Client</span><small>Visible and hidden session control</small></a>
+<a class="nav-link" href="engine-overview.html"><span>Engine Overview</span><small>Shockless runtime overview</small></a>
+<a class="nav-link" href="release-layout.html"><span>Release Layout</span><small>Files included in the public release</small></a>
+      </nav>
+    </aside>
+    <main class="content">
+      <section class="doc-window">
+        <div class="titlebar">
+          <div>
+            <p class="eyebrow">Shockless Documentation</p>
+            <h1>Plugin Authoring</h1>
+          </div>
+          <a class="status-pill" href="index.html">Index</a>
+        </div>
+        <div class="doc-body"><p>﻿# Shockless Plugin Authoring</p>
+<p>This is the practical guide for creating, installing, validating, and shipping</p>
+<p>Shockless plugins.</p>
+<p>Shockless plugins are folder-based modules. Each plugin has a manifest named</p>
+<p><code>shockless.plugin.json</code>, an entry file, and optional supporting files. The Plugin</p>
+<p>Manager validates the manifest, installs the folder, persists enabled state,</p>
+<p>shows the plugin in the rail when enabled, and generates relay packet-hook</p>
+<p>policy from enabled plugin permissions.</p>
+<p>Built-in app plugins are also folder-based, but they use TypeScript metadata</p>
+<p>files instead of user manifests:</p>
+<pre><code>
+src/plugins/&lt;plugin-id&gt;/plugin.ts
+</code></pre>
+<p>The built-in index is <code>src/plugins/builtins.ts</code>; the central</p>
+<p><code>src/plugins/registry.ts</code> only normalizes, sorts, and derives fallback</p>
+<p>permissions. Do not add new built-in plugin definition objects directly to</p>
+<p><code>registry.ts</code>.</p>
+<p>The portable package also ships readable premade module source folders under:</p>
+<pre><code>
+plugins/_premade-modules/&lt;module-id&gt;/
+</code></pre>
+<p>Each premade module is an installable user-plugin example with an id prefixed</p>
+<p>by <code>premade-</code>, for example <code>premade-room</code>. These folders mirror the built-in</p>
+<p>module permissions and event/API patterns so plugin authors can inspect real</p>
+<p>module-style code without colliding with the native built-in panels.</p>
+<h3>Current Capability</h3>
+<p>Usable now:</p>
+<ul>
+<li>Create a plugin from the bundled template.</li>
+<li>Install an existing plugin folder.</li>
+<li>Enable or disable optional plugins.</li>
+<li>Enable or disable each declared UI surface.</li>
+<li>Show user plugins in the plugin rail.</li>
+<li>Show a schema-rendered panel for every plugin. If a plugin omits custom layout JSON, Shockless generates a safe default preview and surface layout from the manifest metadata.</li>
+<li>Persist plugin and surface state.</li>
+<li>Validate plugin folders before install.</li>
+<li>Refuse obvious local private files in plugin folders.</li>
+<li>Run enabled user <code>plugin.js</code> entries in a restricted renderer Worker host.</li>
+<li>Deliver permission-filtered room, chat, session, runtime, and packet events.</li>
+<li>Provide plugin-scoped storage APIs.</li>
+<li>Provide readable helper groups such as <code>subscriptions</code>, <code>runtime</code>, <code>room</code>, <code>session.onSelected()</code>, and <code>chat.onMessage()</code>.</li>
+<li>Provide room chat helpers through <code>chat.send()</code>, <code>chat.say()</code>, <code>chat.shout()</code>, and <code>chat.whisper()</code>.</li>
+<li>Provide packet-backed avatar controls through <code>avatar.*</code>, including</li>
+</ul>
+<p>  coordinate walking and <code>walkToItem()</code> item resolution by id/name/class text.</p>
+<ul>
+<li>Provide packet-backed domain helper APIs through groups such as <code>social.*</code>, <code>furni.*</code>, <code>wallItems.*</code>, and other typed action namespaces listed in the API reference.</li>
+<li>Allow plugins to define local custom events from raw packet observations with</li>
+</ul>
+<p>  <code>events.defineFromPacket()</code>.</p>
+<ul>
+<li>Pass enabled packet permissions into each embedded relay process.</li>
+<li>Filter sensitive client packets from plugin relay policy unless explicitly</li>
+</ul>
+<p>  granted.</p>
+<p>Reserved for later host phases:</p>
+<ul>
+<li>Registering custom console commands from plugin code.</li>
+<li>Blocking, replacing, or mutating live relay traffic from packet event return</li>
+</ul>
+<p>  values. <code>packets.send()</code> is implemented for explicit validated</p>
+<p>  client-to-server packet sends.</p>
+<ul>
+<li>Custom command dispatch from registered plugin commands. Manifest command</li>
+</ul>
+<p>  metadata can be documented today, but runtime registration still returns a</p>
+<p>  reserved result.</p>
+<p>Schema UI is implemented through manifests and restricted runtime updates. Plugin code may update host-rendered schema surfaces with <code>api.ui.registerSurface()</code>, <code>api.ui.updateSurface()</code>, and <code>api.ui.setValue()</code>, then receive interactions through <code>api.ui.onAction()</code>. It cannot mount React components, inject HTML, or access the DOM directly.</p>
+<p>Do not build plugins that depend on unrestricted Electron or Node access. User</p>
+<p>plugin entries run in a Worker and only receive the restricted <code>api</code> host object passed to <code>activate(api)</code>.</p>
+<h3>Create A Plugin</h3>
+<ol>
+<li>Open <code>Plugin Manager</code>.</li>
+<li>Enter a lowercase plugin id, for example <code>room-tools</code>.</li>
+<li>Enter a display name, for example <code>Room Tools</code>.</li>
+<li>Click <code>Create From Template</code>.</li>
+<li>Click <code>Open Folder</code>.</li>
+<li>Edit the created folder.</li>
+<li>Click <code>Reload Plugins</code>.</li>
+<li>Enable the plugin if it is disabled.</li>
+</ol>
+<p>Plugin ids must:</p>
+<ul>
+<li>use lowercase letters, numbers, and hyphens</li>
+<li>start with a letter or number</li>
+<li>be 2 to 64 characters</li>
+<li>not match a built-in plugin id</li>
+</ul>
+<p>Good ids:</p>
+<ul>
+<li><code>room-tools</code></li>
+<li><code>packet-notes</code></li>
+<li><code>visitor-helper</code></li>
+</ul>
+<p>Invalid ids:</p>
+<ul>
+<li><code>Room Tools</code></li>
+<li><code>room_tools</code></li>
+<li><code>plugin!</code></li>
+<li><code>settings</code></li>
+</ul>
+<h3>Install A Plugin</h3>
+<p>Use <code>Install From Folder</code> and select a folder containing</p>
+<p><code>shockless.plugin.json</code>. Shockless validates the selected folder, copies it into the</p>
+<p>managed user plugin root, enables it, and reloads the registry.</p>
+<p>Install is refused when:</p>
+<ul>
+<li>the manifest is missing</li>
+<li>the manifest is invalid JSON</li>
+<li>the plugin id is invalid</li>
+<li>the plugin id is already used</li>
+<li>the category is unknown</li>
+<li>a permission is unknown</li>
+<li>no surfaces are declared</li>
+<li>the entry path is absolute</li>
+<li>the entry path escapes the plugin folder</li>
+<li>the entry file does not exist</li>
+<li>obvious credential, token, password, webhook, or local test-account files are</li>
+</ul>
+<p>  present</p>
+<p>User plugins are installed under:</p>
+<pre><code>
+%APPDATA%/Shockless/plugins/&lt;plugin-id&gt;/
+</code></pre>
+<p>Portable user plugins can also be placed under:</p>
+<pre><code>
+dist/portable/Shockless/plugins/&lt;plugin-id&gt;/
+</code></pre>
+<p>The portable <code>_premade-modules</code> folder is intentionally ignored by automatic</p>
+<p>discovery. Install one of those examples with Plugin Manager -&gt; Install From</p>
+<p>Folder when you want to run it.</p>
+<h3>Folder Layout</h3>
+<p>Minimum folder:</p>
+<pre><code>
+my-plugin/
+  shockless.plugin.json
+  plugin.js
+</code></pre>
+<p>Recommended folder:</p>
+<pre><code>
+my-plugin/
+  shockless.plugin.json
+  plugin.js
+  README.txt
+  assets/
+</code></pre>
+<p>Do not store account lists, passwords, tokens, webhook URLs, or test</p>
+<p>credentials in a plugin folder. The installer rejects obvious private file</p>
+<p>names and the package verifier checks source/package-facing files for private</p>
+<p>local artifacts.</p>
+<p>Packet-facing plugins should prefer named packet helpers and documented event</p>
+<p>payloads over numeric header literals. If a header is not known yet, keep that</p>
+<p>fact visible in plugin output instead of hardcoding a guessed id; header ids can</p>
+<p>move between client builds.</p>
+<h3>Manifest</h3>
+<p>Every plugin must include <code>shockless.plugin.json</code>:</p>
+<pre><code>
+{
+  &quot;id&quot;: &quot;sample-plugin&quot;,
+  &quot;name&quot;: &quot;Sample Plugin&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;author&quot;: &quot;local&quot;,
+  &quot;description&quot;: &quot;A local Shockless plugin.&quot;,
+  &quot;entry&quot;: &quot;plugin.js&quot;,
+  &quot;icon&quot;: &quot;terminal&quot;,
+  &quot;category&quot;: &quot;developer&quot;,
+  &quot;permissions&quot;: [&quot;ui.panel&quot;, &quot;packet.read&quot;],
+  &quot;managedRuntime&quot;: {
+    &quot;clientRights&quot;: []
+  },
+  &quot;surfaces&quot;: [
+    {
+      &quot;id&quot;: &quot;panel&quot;,
+      &quot;kind&quot;: &quot;panel&quot;,
+      &quot;label&quot;: &quot;Sample Panel&quot;,
+      &quot;enabledByDefault&quot;: true,
+      &quot;summary&quot;: &quot;Starter panel for a local plugin.&quot;
+    }
+  ],
+  &quot;commands&quot;: [],
+  &quot;hotkeys&quot;: []
+}
+</code></pre>
+<p>Required fields:</p>
+<ul>
+<li><code>id</code>: stable plugin id.</li>
+<li><code>name</code>: user-visible name.</li>
+<li><code>version</code>: plugin version string.</li>
+<li><code>entry</code>: relative path to the entry JavaScript file.</li>
+<li><code>category</code>: user plugin category.</li>
+<li><code>permissions</code>: permission list.</li>
+<li><code>surfaces</code>: at least one UI surface. Surfaces may include a <code>layout</code> array; if omitted, Shockless generates a metadata-based schema layout so the plugin still has a reproducible panel.</li>
+</ul>
+<p>Optional fields:</p>
+<ul>
+<li><code>author</code>: author name.</li>
+<li><code>description</code>: short panel/manager summary.</li>
+<li><code>icon</code>: icon key from the app icon map.</li>
+<li><code>managedRuntime.clientRights</code>: source Session rights the plugin owns and</li>
+</ul>
+<p>  should clean up when disabled. This requires the <code>client.rights</code> permission.</p>
+<ul>
+<li><code>commands</code>: reserved command declarations.</li>
+<li><code>hotkeys</code>: reserved hotkey declarations.</li>
+</ul>
+<h3>Categories</h3>
+<p>Allowed user categories:</p>
+<ul>
+<li><code>session</code>: multi-client/session tools.</li>
+<li><code>room</code>: room data, room actions, navigation, overlays.</li>
+<li><code>user</code>: avatar/user tools.</li>
+<li><code>inventory</code>: hand/items/inventory helpers.</li>
+<li><code>automation</code>: controlled repeated workflows.</li>
+<li><code>social</code>: friends, messages, requests, visitor-related tools.</li>
+<li><code>developer</code>: diagnostics, packet tooling, experimental local tools.</li>
+</ul>
+<p>Reserved category:</p>
+<ul>
+<li><code>core</code>: built-in recovery tabs only.</li>
+</ul>
+<h3>Icons</h3>
+<p>Use one of the existing icon keys. Unknown keys fall back to an alert icon.</p>
+<p>These keys map to the app&#39;s bundled Lucide icon set and are the only stable</p>
+<p>manifest values today:</p>
+<ul>
+<li><code>activity</code>: performance, status, or live tracking.</li>
+<li><code>bot</code>: automation, session, or repeated workflow helpers.</li>
+<li><code>command</code>: commands, mapped actions, or quick tools.</li>
+<li><code>hammer</code>: builder, wall, furniture, or room editing.</li>
+<li><code>info</code>: facts, lookups, account data, and summaries.</li>
+<li><code>list</code>: logs, packet tables, history, and ordered data.</li>
+<li><code>map</code>: rooms, Navigator, location, and route tools.</li>
+<li><code>messages</code>: chat, social, private messages, and requests.</li>
+<li><code>package</code>: inventory, hand, item bundles, or collected objects.</li>
+<li><code>plug</code>: connection, profile import, lifecycle, and relay status.</li>
+<li><code>sofa</code>: room furniture and room object tools.</li>
+<li><code>terminal</code>: console, packet, diagnostics, and development tools.</li>
+<li><code>user</code>: avatar/user profile and user action tools.</li>
+<li><code>wrench</code>: settings, utilities, and repair tools.</li>
+</ul>
+<h3>Surfaces</h3>
+<p>Each plugin needs at least one surface:</p>
+<pre><code>
+{
+  &quot;id&quot;: &quot;panel&quot;,
+  &quot;kind&quot;: &quot;panel&quot;,
+  &quot;label&quot;: &quot;Sample Panel&quot;,
+  &quot;enabledByDefault&quot;: true,
+  &quot;summary&quot;: &quot;Starter panel for a local plugin.&quot;
+}
+</code></pre>
+<p>Fields:</p>
+<ul>
+<li><code>id</code>: surface id inside the plugin.</li>
+<li><code>kind</code>: <code>panel</code>, <code>overlay</code>, <code>status</code>, or <code>commands</code>.</li>
+<li><code>label</code>: user-visible surface name.</li>
+<li><code>enabledByDefault</code>: whether the surface starts enabled.</li>
+<li><code>summary</code>: short user-visible explanation.</li>
+</ul>
+<p>Current behavior:</p>
+<ul>
+<li>Plugin enabled state controls whether the plugin runs and appears in the app</li>
+</ul>
+<p>  rail. Disabling a plugin stops its Worker, blocks normal runtime API calls,</p>
+<p>  and keeps only storage/declared cleanup routes available during disposal.</p>
+<ul>
+<li><code>panel</code>: controls whether the host-rendered panel surface is mounted in the</li>
+</ul>
+<p>  Plugin Manager detail page.</p>
+<ul>
+<li><code>overlay</code>: controls overlay-style surfaces. Built-in overlays such as Room</li>
+</ul>
+<p>  Info and Social private-message bulletins are gated by their own overlay</p>
+<p>  surfaces; user plugin overlays are persisted for schema/runtime use.</p>
+<ul>
+<li><code>status</code>: controls status-style surfaces. Built-in status surfaces such as the</li>
+</ul>
+<p>  FPS overlay are gated by this setting; user plugin status surfaces are</p>
+<p>  persisted for schema/runtime use.</p>
+<ul>
+<li><code>commands</code>: controls whether the Plugin Manager shows that plugin&#39;s</li>
+</ul>
+<p>  command/hotkey metadata tab. Runtime plugin command registration remains a</p>
+<p>  reserved host phase.</p>
+<p>The Plugin Manager can toggle each surface independently.</p>
+<h3>Schema UI</h3>
+<p>Plugin UI is declarative. Plugin code does not register React components or</p>
+<p>write HTML into the app. The manager renders JSON schema elements from</p>
+<p><code>ui.preview</code>, <code>ui.settings</code>, and <code>surfaces[].layout</code> with the same controls used</p>
+<p>by built-in plugins. This keeps third-party plugin UI consistent and makes a</p>
+<p>plugin reproducible from its manifest plus <code>plugin.js</code>.</p>
+<p>Supported schema element types:</p>
+<ul>
+<li><code>header</code>: section heading.</li>
+<li><code>text</code>: plain explanatory text.</li>
+<li><code>divider</code>: horizontal separator.</li>
+<li><code>section</code>: nested group of schema elements.</li>
+<li><code>notice</code>: themed message block.</li>
+<li><code>button</code>: action or command trigger.</li>
+<li><code>buttonGrid</code>: responsive group of action buttons with one to six columns.</li>
+<li><code>toggle</code> / <code>checkbox</code>: boolean setting.</li>
+<li><code>textInput</code>, <code>numberInput</code>, <code>slider</code>, <code>colorInput</code>, <code>select</code>, <code>keybind</code>:</li>
+</ul>
+<p>  editable controls.</p>
+<ul>
+<li><code>table</code>: structured rows. Optional <code>rowKey</code>, <code>selectedRowKey</code>, and</li>
+</ul>
+<p>  <code>rowAction</code> make rows selectable and emit <code>ui.onAction()</code> events with the</p>
+<p>  selected row key. Optional <code>maxRows</code> limits rendered rows without truncating</p>
+<p>  the source data in plugin code.</p>
+<ul>
+<li><code>kv</code>: key/value facts.</li>
+<li><code>log</code>: fixed log-style rows.</li>
+</ul>
+<p>Every action element may declare <code>action</code>; buttons may also declare <code>command</code>.</p>
+<p>The runtime host delivers control changes through <code>api.ui.onAction()</code> and the</p>
+<p>renderer routes built-in action strings through the app command handlers.</p>
+<p>Schema control values are persisted by plugin id and element id in local app</p>
+<p>storage so plugin settings survive app restarts. Plugins that need structured</p>
+<p>or long-lived data should still use the plugin-scoped <code>api.storage</code> calls.</p>
+<p>Runtime schema helpers:</p>
+<ul>
+<li><code>api.ui.registerSurface({ id, layout })</code>: creates or replaces a host-rendered schema surface for this plugin. <code>registerPanel()</code> is a compatibility alias for the same schema path, not a React panel hook.</li>
+<li><code>api.ui.updateSurface(surfaceId, layout)</code>: replaces the layout for a declared surface such as <code>panel</code>.</li>
+<li><code>api.ui.setValue(key, value)</code>: updates the current value shown by a schema control.</li>
+<li><code>api.ui.onAction(handler)</code>: subscribes to button, button-grid, table row,</li>
+</ul>
+<p>  toggle, checkbox, input, select, and keybind events emitted by the schema</p>
+<p>  renderer.</p>
+<p>Plugin UI must stay declarative JSON schema. Arbitrary HTML, DOM access, and React component mounting are intentionally blocked.</p>
+<p>Example selectable table plus action grid:</p>
+<pre><code>
+{
+  &quot;type&quot;: &quot;table&quot;,
+  &quot;label&quot;: &quot;Room Items&quot;,
+  &quot;columns&quot;: [
+    { &quot;key&quot;: &quot;name&quot;, &quot;label&quot;: &quot;Item&quot; },
+    { &quot;key&quot;: &quot;id&quot;, &quot;label&quot;: &quot;ID&quot; }
+  ],
+  &quot;rows&quot;: [
+    { &quot;key&quot;: &quot;floor:123&quot;, &quot;name&quot;: &quot;Chair&quot;, &quot;id&quot;: 123 }
+  ],
+  &quot;rowKey&quot;: &quot;key&quot;,
+  &quot;selectedRowKey&quot;: &quot;floor:123&quot;,
+  &quot;rowAction&quot;: &quot;items.select&quot;,
+  &quot;maxRows&quot;: 80
+}
+</code></pre>
+<pre><code>
+{
+  &quot;type&quot;: &quot;buttonGrid&quot;,
+  &quot;columns&quot;: 3,
+  &quot;buttons&quot;: [
+    { &quot;label&quot;: &quot;Use&quot;, &quot;action&quot;: &quot;items.use&quot;, &quot;variant&quot;: &quot;primary&quot; },
+    { &quot;label&quot;: &quot;Rotate&quot;, &quot;action&quot;: &quot;items.rotate&quot; },
+    { &quot;label&quot;: &quot;Pickup&quot;, &quot;action&quot;: &quot;items.pickup&quot;, &quot;variant&quot;: &quot;danger&quot; }
+  ]
+}
+</code></pre>
+<h3>Permissions</h3>
+<p>Only request what the plugin actually needs.</p>
+<ul>
+<li><code>ui.panel</code>: plugin declares a panel surface.</li>
+<li><code>ui.status</code>: plugin declares a status surface.</li>
+<li><code>ui.overlay</code>: plugin declares an overlay surface.</li>
+<li><code>console.commands</code>: plugin intends to register console commands.</li>
+<li><code>engine.snapshot</code>: plugin needs selected-client runtime snapshots.</li>
+<li><code>engine.control</code>: plugin intends to control engine/runtime behavior.</li>
+<li><code>notifications.show</code>: plugin can render selected-client native top-right</li>
+</ul>
+<p>  bulletin notifications through the Shockless notification manager.</p>
+<ul>
+<li><code>client.rights</code>: plugin reads or mutates selected-client source Session</li>
+</ul>
+<p>  rights such as <code>fuse_habbo_chooser</code> and <code>fuse_furni_chooser</code>.</p>
+<ul>
+<li><code>events.room</code>: plugin listens to room lifecycle/user events.</li>
+<li><code>events.chat</code>: plugin listens to chat events.</li>
+<li><code>events.packet</code>: plugin listens to packet events without packet mutation.</li>
+<li><code>events.session</code>: plugin listens to client/session events.</li>
+<li><code>chat.send</code>: plugin sends normal room chat. <code>chat.say</code>, <code>chat.shout</code>, and <code>chat.whisper</code> are readable mode helpers over the same permission.</li>
+<li><code>actions.avatar</code>: plugin sends validated avatar movement/action packets such</li>
+</ul>
+<p>  as walk, wave, dance, carry drink, and apply look.</p>
+<ul>
+<li><code>actions.social</code>: plugin sends validated social packets such as friend</li>
+</ul>
+<p>  request, private message, accept/decline request, remove, follow, and request</p>
+<p>  refresh.</p>
+<ul>
+<li><code>actions.fishing</code>: plugin sends validated Fishing start, minigame input,</li>
+</ul>
+<p>  derby register, token, products, rod, stats, and Fishopedia packets. Use it</p>
+<p>  with <code>actions.avatar</code> when the plugin also needs generic movement such as</p>
+<p>  <code>avatar.walkToArea()</code>.</p>
+<ul>
+<li><code>actions.furni</code>: plugin sends validated floor/wall furniture move, rotate,</li>
+</ul>
+<p>  use, and pickup packets through <code>furni.*</code>.</p>
+<ul>
+<li><code>actions.plants</code>: plugin sends validated Gardening plant move, water,</li>
+</ul>
+<p>  harvest, and compost packets. Pair it with <code>engine.snapshot</code> for</p>
+<p>  <code>plants.findPlants()</code>, <code>plants.getState()</code>, <code>plants.planCycle()</code>, and</p>
+<p>  <code>plants.runCycle()</code>.</p>
+<ul>
+<li><code>actions.wallItems</code>: plugin sends validated wall item move and pickup</li>
+</ul>
+<p>  packets.</p>
+<ul>
+<li><code>storage</code>: plugin needs plugin-scoped persistence.</li>
+<li><code>packet.read</code>: plugin needs non-sensitive decrypted packet metadata.</li>
+<li><code>packet.inject</code>: plugin intends to send scoped packets.</li>
+<li><code>packet.intercept</code>: plugin intends to intercept non-sensitive decrypted</li>
+</ul>
+<p>  packets.</p>
+<ul>
+<li><code>packet.intercept.sensitive</code>: plugin explicitly needs sensitive packet</li>
+</ul>
+<p>  families.</p>
+<p>Sensitive access is never implied by <code>packet.read</code> or <code>packet.intercept</code>.</p>
+<p>Sensitive client headers currently include login/key identity families such as</p>
+<p><code>TRY_LOGIN [4]</code>, <code>UNIQUEID [6]</code>, and <code>GENERATEKEY [202]</code>.</p>
+<p>The <code>client.*Rights</code> APIs mutate the selected Shockless source</p>
+<p><code>Session.user_rights</code> list for advanced clientside runtime experiments. They do</p>
+<p>not grant server account privileges and no bundled public addon enables them by</p>
+<p>default.</p>
+<p>If a plugin grants source Session rights, list them in</p>
+<p><code>managedRuntime.clientRights</code>. Disabled plugins are blocked from normal runtime</p>
+<p>actions, but their dispose handler may still remove only those declared rights.</p>
+<h3>Entry File</h3>
+<p>The template entry uses an ESM-style module:</p>
+<pre><code>
+export function activate(api) {
+  const { log, packets, subscriptions } = api;
+  const cleanup = subscriptions.create();
+
+  log.info(&quot;Sample plugin activated.&quot;);
+  cleanup.add(packets.on(&quot;server&quot;, { header: 24 }, (packet) =&gt; {
+    log.info(`server packet ${packet.header}`);
+    return packet.allow();
+  }));
+
+  return cleanup.dispose;
+}
+</code></pre>
+<p>Current status:</p>
+<ul>
+<li>The entry path is validated and displayed.</li>
+<li>The entry file is packaged/copied with the plugin.</li>
+<li>Enabled user plugin entries are loaded in a restricted Worker host.</li>
+<li>The host enforces manifest permissions before delivering events or running</li>
+</ul>
+<p>  privileged APIs.</p>
+<p>Preferred plugin code destructures the API groups it uses:</p>
+<pre><code>
+export async function activate(api) {
+  const { avatar, log, room, storage, subscriptions } = api;
+  const cleanup = subscriptions.create();
+
+  await storage.remember(&quot;lastActivated&quot;, { active: true });
+  cleanup.add(room.onReady((event) =&gt; log.info(`Room ready: ${event.room?.name ?? &quot;unknown&quot;}`)));
+
+  await avatar.wave();
+  return cleanup.dispose;
+}
+</code></pre>
+<p>The complete source-backed API list lives in</p>
+<p><a href="plugin-api.html"><code>plugin-api.html</code></a>. Keep examples in this</p>
+<p>guide on the clean group style: <code>avatar.walkToItem()</code>, <code>furni.moveFloorItem()</code>, <code>chat.say()</code>, <code>packets.on()</code>, and so on.</p>
+<p>The architecture direction behind this style is documented in</p>
+<p><a href="xabbo-style-plugin-rewrite-plan.md"><code>xabbo-style-plugin-rewrite-plan.md</code></a> and</p>
+<p>plugin architecture notes.<p>Origins/Shockwave packet builders and runtime managers.</p>
+<p>Common events are available through raw <code>events.on(...)</code> and, where listed, through readable helper groups such as <code>room.onReady(...)</code>, <code>runtime.onSnapshot(...)</code>, <code>session.onSelected(...)</code>, and <code>chat.onMessage(...)</code>.</p>
+<p>The host also provides small script helpers so plugins do not copy parser</p>
+<p>boilerplate into every file:</p>
+<ul>
+<li><code>storage.remember(key, value)</code>: stores <code>{ value, updatedAt }</code>.</li>
+<li><code>room.itemKey(item)</code>, <code>room.userKey(user)</code>, and <code>room.objectId(item)</code>:</li>
+</ul>
+<p>  stable ids for live maps and action routing.</p>
+<ul>
+<li><code>room.summarizeItem(item)</code>, <code>room.summarizeItems(items)</code>, and</li>
+</ul>
+<p>  <code>room.countItems(event)</code>: compact data for UI/storage.</p>
+<ul>
+<li><code>room.keepSelectedItem(selected, items)</code> and</li>
+</ul>
+<p>  <code>room.keepSelectedWallItem(selected, items)</code>: preserve selected items across</p>
+<p>  room updates.</p>
+<ul>
+<li><code>furni.wallMoveLocation(item, { deltaX, deltaY, orientation })</code>: converts a</li>
+</ul>
+<p>  parsed wall item into the move shape accepted by <code>furni.moveWallItem()</code>.</p>
+<ul>
+<li><code>packets.summary(packet)</code>, <code>packets.hasName(packet, ...names)</code>, and</li>
+</ul>
+<p>  <code>packets.field(packet, labelOrRegex)</code>: readable packet checks without local</p>
+<p>  packet-summary helper functions.</p>
+<p>Common events:</p>
+<ul>
+<li><code>session.selected</code>: selected client changed.</li>
+<li><code>runtime.snapshot</code>: selected visible runtime snapshot changed.</li>
+<li><code>room.changed</code>: selected visible client entered or changed room.</li>
+<li><code>room.ready</code>: selected visible room became ready.</li>
+<li><code>room.users</code>: full current room user list after a room change.</li>
+<li><code>room.userJoined</code>: a new room user appeared after the current room snapshot.</li>
+<li><code>room.userLeft</code>: a room user disappeared after the current room snapshot.</li>
+<li><code>room.items</code>: full parsed floor and wall item list after a room load or item</li>
+</ul>
+<p>  change.</p>
+<ul>
+<li><code>room.floorItemsLoaded</code> / <code>room.wallItemsLoaded</code>: floor/wall item lists after</li>
+</ul>
+<p>  a room load.</p>
+<ul>
+<li><code>room.itemAdded</code> / <code>room.itemUpdated</code> / <code>room.itemRemoved</code>: item deltas for</li>
+</ul>
+<p>  all room object kinds, with floor/wall-specific variants.</p>
+<ul>
+<li><code>chat.message</code>: a new selected-room chat line appeared.</li>
+<li><code>packet</code>: new decoded packet row from any direction.</li>
+<li><code>packet.client</code>: new client-to-server decoded packet row.</li>
+<li><code>packet.server</code>: new server-to-client decoded packet row.</li>
+</ul>
+<p>Packet event filtering:</p>
+<pre><code>
+const { log, packets } = api;
+const off = packets.on(&quot;server&quot;, { header: 24 }, (packet) =&gt; {
+  log.info(JSON.stringify(packets.summary(packet)));
+  return packet.allow();
+});
+</code></pre>
+<p>Supported directions are <code>server</code>, <code>client</code>, and <code>all</code>. Filters can include</p>
+<p><code>header</code> or <code>packetName</code>. Packet handler return values are accepted for API</p>
+<p>compatibility, but packet mutation is not applied until validated mutation is</p>
+<p>enabled.</p>
+<p>Raw sends are available through <code>packets.send(clientId, packet)</code> when the</p>
+<p>manifest includes <code>packet.inject</code>. Prefer typed APIs for known actions, but use</p>
+<p>the raw builder when you are testing a valid client packet family that does not</p>
+<p>have a domain helper yet:</p>
+<pre><code>
+export async function activate({ log, packets, session }) {
+  const clients = await session.getClients();
+  const clientId = clients.selectedClientId;
+
+  await packets.send(clientId, { packetName: &quot;WAVE&quot; });
+  await packets.send(clientId, { header: 52, bodyEscapedText: &quot;hello[0]&quot; });
+  log.info(&quot;Sent two validated client packets.&quot;);
+}
+</code></pre>
+<p>The builder accepts one body source per packet: <code>bodyBytes</code>, <code>bodyHex</code>,</p>
+<p><code>bodyText</code>, <code>bodyEscapedText</code>, or full <code>packetText</code>. <code>packetName</code> must resolve</p>
+<p>through the outgoing packet table. Unknown numeric headers are allowed and</p>
+<p>display as <code>UNKNOWN_HEADER</code>; sensitive login/key headers such as</p>
+<p><code>TRY_LOGIN [4]</code>, <code>UNIQUEID [6]</code>, and <code>GENERATEKEY [202]</code> are refused.</p>
+<p>Plugins can schedule the same validated API without private host access. Keep</p>
+<p>the timer owned by the plugin cleanup scope so disabling or unloading the</p>
+<p>plugin stops future sends:</p>
+<pre><code>
+export async function activate({ packets, session, subscriptions }) {
+  const cleanup = subscriptions.create();
+  const timer = setInterval(async () =&gt; {
+    const clients = await session.getClients();
+    await packets.send(clients.selectedClientId, { packetName: &quot;WAVE&quot; });
+  }, 60_000);
+  cleanup.add(() =&gt; clearInterval(timer));
+  return cleanup.dispose;
+}
+</code></pre>
+<p>The built-in Injection panel uses this same validated builder. Its panel is</p>
+<p>schema-rendered and contains only packet direction, complete packet text,</p>
+<p>validation, session/repeat targeting, saved packets, and sent history. Source</p>
+<p>window IDs, element IDs, stage clicks, and other runtime commands belong to</p>
+<p>their domain APIs rather than packet injection.</p>
+<h3>Action Examples</h3>
+<p>Walk to a tile, parsed floor item, parsed area, or live room user:</p>
+<pre><code>
+export async function activate(api) {
+  const { avatar } = api;
+  await avatar.walkTo(6, 8, 0, { clientId: 1 });
+  await avatar.walkToItem(&quot;pumpkin&quot;, { clientId: 1 });
+  await avatar.walkToItem({ objectId: 12345 }, { clientId: 1 });
+  await avatar.walkToArea({ className: &quot;ads_fish_area&quot;, exact: true }, { clientId: 1 });
+  await avatar.walkToArea({ x: 10, y: 12 }, { clientId: 1 });
+  await avatar.walkToUser(&quot;dek&quot;, { offset: { x: 1, y: 0 }, clientId: 1 });
+}
+</code></pre>
+<p><code>walkToItem()</code> and object-selector <code>walkToArea()</code> resolve only floor/passive</p>
+<p>objects with tile coordinates. <code>walkToUser()</code> resolves the live room user list by</p>
+<p>name, account id, room index, or row id. Use <code>furni.*</code> for moving, rotating, or</p>
+<p>picking up furniture, and <code>teleport.enter()</code> for the common walk-and-use</p>
+<p>teleport flow.</p>
+<p>Find, move, rotate, use, or pick up furniture with selectors:</p>
+<pre><code>
+export async function activate(api) {
+  const { furni, log, room, subscriptions } = api;
+  const cleanup = subscriptions.create();
+
+  cleanup.add(room.onItems(async (event) =&gt; {
+    const pumpkins = event.floorItems.filter((item) =&gt; String(item.searchText || item.name || item.className).includes(&quot;pumpkin&quot;));
+    log.info(`pumpkins in room: ${pumpkins.length}`);
+  }));
+
+  const matching = await furni.findItems({ query: &quot;chair&quot;, kind: &quot;floor&quot; });
+  for (const item of matching) {
+    await furni.rotateFloorItem(item, 4);
+  }
+
+  return cleanup.dispose;
+}
+</code></pre>
+<p>For pickup scripts, pass a room item payload or include <code>kind</code> so the host knows</p>
+<p>whether to send the floor or wall pickup route:</p>
+<pre><code>
+const posters = await furni.findItems({ query: &quot;poster&quot;, kind: &quot;wall&quot; });
+for (const poster of posters) await furni.pickupItem(poster);
+
+const poster = await furni.findItem({ query: &quot;poster&quot;, kind: &quot;wall&quot; });
+const nextLocation = furni.wallMoveLocation(poster, { deltaX: 1 });
+if (nextLocation) await furni.moveWallItem(nextLocation, nextLocation);
+</code></pre>
+<p>Use a floor item by id or selector:</p>
+<pre><code>
+export async function activate({ avatar, furni }) {
+  const item = await furni.findItem({ query: &quot;switch&quot;, kind: &quot;floor&quot; });
+  if (!item?.tile) return;
+
+  await avatar.walkTo(item.tile.x, item.tile.y, Number(item.objectId));
+  await furni.useFloorItem(item, &quot;0&quot;);
+}
+</code></pre>
+<p><code>furni.useFloorItem()</code> sends <code>SET_STUFF_DATA [74]</code> with the selected object id</p>
+<p>and value as outgoing Shockwave strings. Use it for floor furniture that accepts</p>
+<p>state through the standard item-use route.</p>
+<p>Allow native floor item drag/drop outside visible room tiles:</p>
+<pre><code>
+export async function activate({ furni }) {
+  await furni.setAnywherePlacementEnabled(true);
+  return () =&gt; furni.setAnywherePlacementEnabled(false);
+}
+</code></pre>
+<p><code>furni.setAnywherePlacementEnabled()</code> requires <code>actions.furni</code> and</p>
+<p><code>engine.control</code>. It keeps the normal Object Mover cursor and click flow in</p>
+<p>charge; it only changes the floor-coordinate validation while the plugin is</p>
+<p>enabled. When that source mover commits a synthetic off-room coordinate,</p>
+<p>Shockless sends the same <code>ORIGINS_SET_FURNI_LOCATION [1257]</code> packet used by</p>
+<p>Origins&#39; precise mover instead of the model-bounded <code>MOVESTUFF [73]</code> route.</p>
+<p>Use the precise floor-location route directly when a plugin already knows the</p>
+<p>object id and target coordinate:</p>
+<pre><code>
+export async function activate({ furni }) {
+  const item = await furni.findItem({ query: &quot;trophy&quot;, kind: &quot;floor&quot; });
+  if (!item) return;
+
+  await furni.setFloorItemLocation(item, 14, 11, 0);
+}
+</code></pre>
+<p><code>furni.setFloorItemLocation()</code> requires <code>actions.furni</code>. Selectors still need</p>
+<p><code>engine.snapshot</code>; numeric ids with explicit x/y/height can be sent without a</p>
+<p>snapshot.</p>
+<p>Leave a room when a matching user or badge appears:</p>
+<pre><code>
+export function activate({ room, rooms, subscriptions }) {
+  const cleanup = subscriptions.create();
+
+  cleanup.add(room.onUserJoined(async ({ user, clientId }) =&gt; {
+    if (user.name === &quot;SomeUser&quot; || user.badgeCode === &quot;BADGE_CODE&quot;) {
+      await rooms.leave({ clientId });
+    }
+  }));
+
+  return cleanup.dispose;
+}
+</code></pre>
+<p>Use a teleport item without writing packet code:</p>
+<pre><code>
+export async function activate({ teleport }) {
+  await teleport.enter({ query: &quot;teleport&quot;, kind: &quot;floor&quot; });
+}
+</code></pre>
+<p>Allow native wall item drag/drop outside visible wall bounds:</p>
+<pre><code>
+export async function activate({ wallItems }) {
+  await wallItems.setAnywherePlacementEnabled(true);
+  return () =&gt; wallItems.setAnywherePlacementEnabled(false);
+}
+</code></pre>
+<p>Move a wall item with parsed wall/local coordinates:</p>
+<pre><code>
+await wallItems.moveItem({
+  itemId: 12345,
+  wallX: 3,
+  wallY: 1,
+  localX: 24,
+  localY: 12,
+  orientation: &quot;l&quot;,
+  className: &quot;poster&quot;,
+});
+</code></pre>
+<p>Move a wall item to a point the user clicks on the stage:</p>
+<pre><code>
+export async function activate({ engine, room, stage, wallItems }) {
+  const snapshot = await engine.getSnapshot();
+  const item = room.wallItemsFromSnapshot(snapshot)[0];
+  if (!item) return;
+
+  const point = await stage.captureNextClick({ timeoutMs: 15000 });
+  await wallItems.moveAnywhere(item, point);
+}
+</code></pre>
+<p>Hide selected users locally while the plugin is active:</p>
+<pre><code>
+export async function activate({ filters }) {
+  await filters.setHiddenUsers([&quot;SomeUser&quot;, &quot;233421&quot;]);
+  return () =&gt; filters.clearHiddenUsers();
+}
+</code></pre>
+<p>Define plugin-local events from packet data when the host does not expose a</p>
+<p>named event yet:</p>
+<pre><code>
+export function activate(api) {
+  const { events, log } = api;
+  const offPacket = events.defineFromPacket(
+    &quot;custom.usersPacket&quot;,
+    &quot;server&quot;,
+    { packetName: &quot;USERS&quot; },
+    (packet) =&gt; ({ count: packet.decodedFields.length, packet }),
+  );
+
+  const offEvent = events.on(&quot;custom.usersPacket&quot;, ({ count }) =&gt; {
+    log.info(`USERS packet decoded fields: ${count}`);
+  });
+
+  return () =&gt; {
+    offPacket();
+    offEvent();
+  };
+}
+</code></pre>
+<h3>Packet Hooks</h3>
+<p>Packet-hook policy is generated from enabled plugin permissions and passed to</p>
+<p>each embedded relay before the client starts.</p>
+<p>Relay evaluation point:</p>
+<ul>
+<li>client to server: after browser-side plaintext is parsed, before writing to</li>
+</ul>
+<p>  the official TCP socket</p>
+<ul>
+<li>server to client: after official plaintext is parsed, before writing to the</li>
+</ul>
+<p>  browser websocket</p>
+<p>Policy decisions include:</p>
+<ul>
+<li>whether the packet is sensitive</li>
+<li>which enabled plugins can read it</li>
+<li>which enabled plugins can intercept it</li>
+<li>which enabled plugins can inject scoped packets</li>
+</ul>
+<p>Current behavior:</p>
+<ul>
+<li>The relay policy is generated from enabled plugin permissions and is passed</li>
+</ul>
+<p>  to each relay process.</p>
+<ul>
+<li>The renderer host emits decoded packet rows as <code>packet</code>, <code>packet.client</code>,</li>
+</ul>
+<p>  and <code>packet.server</code> events to plugins with packet/event permissions.</p>
+<ul>
+<li>Packet handler return values such as <code>allow</code>, <code>block</code>, <code>replace</code>, and</li>
+</ul>
+<p>  <code>inject</code> are accepted by the worker API for forward compatibility.</p>
+<ul>
+<li>Packet mutation is not applied yet. Raw packet send/mutation will only be</li>
+</ul>
+<p>  enabled through a validated Shockwave packet builder so plugins cannot send</p>
+<p>  malformed packets.</p>
+<p>This follows the same rule as mature proxy extension systems: broad hooks are</p>
+<p>useful, but packet writes need type/direction validation before they touch a</p>
+<p>live session.</p>
+<h3>Commands And Hotkeys</h3>
+<p><code>commands</code> and <code>hotkeys</code> are manifest fields reserved for plugin command</p>
+<p>registration. They are validated as arrays but not executed yet. Plugin code</p>
+<p>can call <code>console.registerCommand()</code>, but the host returns a reserved feature</p>
+<p>result until the command registry phase is implemented.</p>
+<p>Recommended future shape:</p>
+<pre><code>
+{
+  &quot;commands&quot;: [
+    {
+      &quot;name&quot;: &quot;sample&quot;,
+      &quot;label&quot;: &quot;Sample&quot;,
+      &quot;description&quot;: &quot;Run sample command.&quot;
+    }
+  ],
+  &quot;hotkeys&quot;: [
+    {
+      &quot;key&quot;: &quot;F8&quot;,
+      &quot;command&quot;: &quot;sample&quot;
+    }
+  ]
+}
+</code></pre>
+<p>For built-in command bindings today, use the Settings tab or the backtick</p>
+<p>console <code>bind</code> command.</p>
+<p>Command <code>name</code> values are machine ids and must be lowercase identifier-style</p>
+<p>strings such as <code>sample.ping</code>. Use optional <code>label</code> for display text in Plugin</p>
+<p>Manager.</p>
+<h3>Plugin Manager UI</h3>
+<p>Plugin Manager shows:</p>
+<ul>
+<li>user plugin root</li>
+<li>portable plugin root</li>
+<li>total plugin count</li>
+<li>enabled plugin count</li>
+<li>create-from-template controls</li>
+<li>install/reload/open-folder actions</li>
+<li>every built-in and user plugin</li>
+<li>pinned/enabled/disabled state</li>
+<li>permissions</li>
+<li>surfaces and surface toggles</li>
+<li>load errors</li>
+</ul>
+<p>Pinned plugins cannot be disabled. Currently pinned core plugins are Plugin</p>
+<p>Manager and Settings. Connection starts enabled by default but remains an</p>
+<p>optional module.</p>
+<h3>User Plugin Panel</h3>
+<p>Every enabled user plugin gets a standard panel showing:</p>
+<ul>
+<li>status</li>
+<li>version</li>
+<li>author</li>
+<li>category</li>
+<li>entry file</li>
+<li>surface count</li>
+<li>permissions</li>
+<li>surface enabled state</li>
+<li>open-folder action</li>
+<li>reload action</li>
+</ul>
+<p>This gives users immediate feedback that a created or installed plugin is</p>
+<p>registered correctly even before custom panel rendering is available.</p>
+<h3>Packaging</h3>
+<p>Portable builds include:</p>
+<pre><code>
+resources/app/dist/plugins/template/shockless.plugin.json
+resources/app/dist/plugins/template/plugin.js
+resources/app/dist/plugins/template/README.txt
+plugins/_premade-modules/README.txt
+plugins/_premade-modules/welcome-message/shockless.plugin.json
+plugins/_premade-modules/welcome-message/plugin.js
+plugins/_premade-modules/welcome-message/README.txt
+plugins/_premade-modules/&lt;module-id&gt;/shockless.plugin.json
+plugins/_premade-modules/&lt;module-id&gt;/plugin.js
+plugins/_premade-modules/&lt;module-id&gt;/README.txt
+</code></pre>
+<p>The portable verifier fails if the template files, premade Welcome Message</p>
+<p>plugin, or premade module source pack are missing. Premade source-reference</p>
+<p>plugins live in <code>Shockless/plugins/_premade-modules/</code> and can be installed</p>
+<p>through Plugin Manager when users want to copy or customize them.</p>
+<p>Portable users can install plugins through the manager or place plugin folders</p>
+<p>under:</p>
+<pre><code>
+Shockless/plugins/&lt;plugin-id&gt;/
+</code></pre>
+<h3>Validation Checklist</h3>
+<p>When developing plugin-manager changes:</p>
+<pre><code>
+npm run typecheck -- --pretty false
+npm test
+npm run build
+</code></pre>
+<p>Relevant tests:</p>
+<ul>
+<li><code>tests/pluginManager.test.ts</code></li>
+<li><code>tests/pluginRelayHooks.test.ts</code></li>
+<li><code>tests/contracts.test.ts</code></li>
+<li><code>tests/securityArtifacts.test.ts</code></li>
+</ul>
+<p>Useful manual checks:</p>
+<ul>
+<li>Create a plugin from template.</li>
+<li>Reload plugins.</li>
+<li>Disable the created plugin and confirm it disappears from the rail.</li>
+<li>Re-enable it from Plugin Manager and confirm the user plugin panel opens.</li>
+<li>Install a copied plugin folder and confirm duplicate ids are rejected.</li>
+<li>Try installing a folder with an obvious private file name and confirm it is</li>
+</ul>
+<p>  refused.</p>
+<h3>Example Plugins</h3>
+<p>Working welcome message example:</p>
+<pre><code>
+examples/premade-plugins/welcome-message/
+  shockless.plugin.json
+  plugin.js
+  README.txt
+</code></pre>
+<p>What it demonstrates:</p>
+<ul>
+<li>manifest permissions for <code>events.room</code>, <code>chat.send</code>, <code>storage</code>, and</li>
+</ul>
+<p>  <code>engine.snapshot</code></p>
+<ul>
+<li><code>events.on(&quot;room.userJoined&quot;, handler)</code></li>
+<li>ignoring the selected user through the <code>event.user.isSelf</code> flag</li>
+<li>a per-room/user cooldown using plugin-local memory</li>
+<li>room chat sending through <code>chat.say(message, { clientId })</code>, <code>chat.shout()</code>, or <code>chat.whisper()</code></li>
+</ul>
+<p>Install it with Plugin Manager -&gt; <code>Install From Folder</code>, select</p>
+<p><code>examples/premade-plugins/welcome-message</code>, then enter a private room and let another</p>
+<p>user join.</p>
+<p>Read-only packet watcher manifest:</p>
+<pre><code>
+{
+  &quot;id&quot;: &quot;packet-watcher&quot;,
+  &quot;name&quot;: &quot;Packet Watcher&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;entry&quot;: &quot;plugin.js&quot;,
+  &quot;category&quot;: &quot;developer&quot;,
+  &quot;permissions&quot;: [&quot;ui.panel&quot;, &quot;packet.read&quot;],
+  &quot;surfaces&quot;: [
+    {
+      &quot;id&quot;: &quot;panel&quot;,
+      &quot;kind&quot;: &quot;panel&quot;,
+      &quot;label&quot;: &quot;Packet Watcher&quot;,
+      &quot;enabledByDefault&quot;: true,
+      &quot;summary&quot;: &quot;Displays packet watcher status.&quot;
+    }
+  ]
+}
+</code></pre>
+<p>Room overlay manifest:</p>
+<pre><code>
+{
+  &quot;id&quot;: &quot;room-overlay-tools&quot;,
+  &quot;name&quot;: &quot;Room Overlay Tools&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;entry&quot;: &quot;plugin.js&quot;,
+  &quot;category&quot;: &quot;room&quot;,
+  &quot;permissions&quot;: [&quot;ui.panel&quot;, &quot;ui.overlay&quot;, &quot;engine.snapshot&quot;],
+  &quot;surfaces&quot;: [
+    {
+      &quot;id&quot;: &quot;panel&quot;,
+      &quot;kind&quot;: &quot;panel&quot;,
+      &quot;label&quot;: &quot;Room Overlay Tools&quot;,
+      &quot;enabledByDefault&quot;: true,
+      &quot;summary&quot;: &quot;Room overlay controls.&quot;
+    },
+    {
+      &quot;id&quot;: &quot;overlay&quot;,
+      &quot;kind&quot;: &quot;overlay&quot;,
+      &quot;label&quot;: &quot;Room Overlay&quot;,
+      &quot;enabledByDefault&quot;: false,
+      &quot;summary&quot;: &quot;Optional room overlay surface.&quot;
+    }
+  ]
+}
+</code></pre>
+<p>Room action manifest:</p>
+<pre><code>
+{
+  &quot;id&quot;: &quot;room-action-tools&quot;,
+  &quot;name&quot;: &quot;Room Action Tools&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;entry&quot;: &quot;plugin.js&quot;,
+  &quot;category&quot;: &quot;automation&quot;,
+  &quot;permissions&quot;: [&quot;ui.panel&quot;, &quot;engine.snapshot&quot;, &quot;actions.avatar&quot;, &quot;actions.furni&quot;],
+  &quot;surfaces&quot;: [
+    {
+      &quot;id&quot;: &quot;panel&quot;,
+      &quot;kind&quot;: &quot;panel&quot;,
+      &quot;label&quot;: &quot;Room Actions&quot;,
+      &quot;enabledByDefault&quot;: true,
+      &quot;summary&quot;: &quot;Schema controls for selected room actions.&quot;
+    }
+  ]
+}
+</code></pre></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "id": "premade-floor-item-anywhere",
+  "name": "Floor Item Anywhere Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Floor Item Anywhere module.",
+  "entry": "plugin.js",
+  "icon": "sofa",
+  "category": "automation",
+  "permissions": [
+    "ui.panel",
+    "engine.control",
+    "actions.furni",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Floor Item Anywhere Panel",
+      "enabledByDefault": true,
+      "summary": "Native Object Mover compatibility toggle and status.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Floor item anywhere",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Enables native floor furniture drag/drop outside visible room tiles."
+        },
+        {
+          "type": "section",
+          "title": "Native placement",
+          "children": [
+            {
+              "type": "notice",
+              "tone": "info",
+              "text": "Click a floor item, press Move, drag it outside the visible room floor, then click to place."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "commands": [],
+  "hotkeys": []
+}

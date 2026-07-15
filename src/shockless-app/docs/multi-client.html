@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Multi-Client Sessions - Shockless</title>
+  <style>
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-goldfish.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-bold-goldfish.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    :root {
+      color-scheme: dark;
+      --font: "Volter Goldfish", "Segoe UI", Tahoma, sans-serif;
+      --font-read: "Segoe UI", Tahoma, Arial, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+      --bg: #050505;
+      --panel: #101010;
+      --panel-2: #171717;
+      --panel-3: #202020;
+      --line: #2b2b2b;
+      --text: #dedede;
+      --muted: #9a9a9a;
+      --dim: #656565;
+      --gold: #e3b23a;
+      --gold-dark: #9c7418;
+      --shadow: #000;
+      --bevel: inset 2px 2px 0 #2d2d2d, inset -2px -2px 0 #000;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font: 14px/1.55 var(--font-read);
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 12px),
+        linear-gradient(180deg, #0b0b0b 0%, #030303 100%);
+    }
+    a { color: inherit; }
+    code, pre { font-family: var(--mono); }
+    pre {
+      overflow: auto;
+      max-width: 100%;
+      padding: 14px;
+      background: #070707;
+      border: 1px solid var(--line);
+      box-shadow: var(--bevel);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+      display: block;
+      overflow-x: auto;
+      white-space: normal;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    th { background: var(--panel-2); color: var(--gold); text-align: left; }
+    .shell {
+      display: grid;
+      grid-template-columns: 276px minmax(0, 1120px);
+      gap: 14px;
+      min-height: 100vh;
+      justify-content: center;
+      padding: 12px;
+      max-width: 100%;
+    }
+    .sidebar {
+      min-width: 0;
+      position: sticky;
+      top: 12px;
+      height: calc(100vh - 24px);
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel);
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 8px;
+      margin-bottom: 12px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      box-shadow: var(--bevel);
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #f1c550, var(--gold-dark));
+      color: #111;
+      font: 700 20px/1 var(--font);
+      box-shadow: 0 0 0 2px #000, inset 2px 2px 0 rgba(255,255,255,.24), inset -2px -2px 0 #5b4108;
+    }
+    .brand strong {
+      display: block;
+      font: 700 15px/1 var(--font);
+      text-shadow: 2px 2px 0 #000;
+    }
+    .brand small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font: 9px/1 var(--font);
+    }
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+    .nav-link {
+      display: block;
+      padding: 10px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      border-left: 3px solid transparent;
+      box-shadow: var(--bevel);
+    }
+    .nav-link:hover,
+    .nav-link.active {
+      border-left-color: var(--gold);
+      background: #1d1d1d;
+    }
+    .nav-link span {
+      display: block;
+      color: #f1f1f1;
+      font: 700 10px/1.2 var(--font);
+      text-shadow: 2px 2px 0 #000;
+    }
+    .nav-link small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .content {
+      min-width: 0;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+    .hero-window,
+    .doc-window {
+      min-width: 0;
+      max-width: 100%;
+      background: var(--panel);
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+    }
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #171717;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--gold);
+      font: 700 9px/1 var(--font);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    h1, h2, h3 {
+      color: #f5f5f5;
+      line-height: 1.2;
+      text-shadow: 2px 2px 0 #000;
+    }
+    h1 {
+      margin: 0;
+      font: 700 24px/1.1 var(--font);
+    }
+    h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 21px;
+    }
+    h3 { margin-top: 22px; }
+    .status-pill,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      color: var(--text);
+      text-decoration: none;
+      background: #1a1a1a;
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+      font: 700 10px/1 var(--font);
+    }
+    .button.primary {
+      color: #111;
+      background: linear-gradient(180deg, #efc24b, #c79422);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(260px, .6fr);
+      gap: 14px;
+      padding: 18px;
+    }
+    .lead {
+      margin: 0;
+      max-width: 760px;
+      color: var(--text);
+      font-size: 16px;
+    }
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .path-card {
+      padding: 14px;
+      background: #090909;
+      border: 1px solid var(--line);
+      box-shadow: var(--bevel);
+    }
+    .path-card .label,
+    .path-card .hint {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .path-card code {
+      display: block;
+      margin: 10px 0;
+      color: var(--gold);
+      word-break: break-word;
+    }
+    .section-heading {
+      padding: 14px 16px 0;
+    }
+    .section-heading h2 {
+      margin-top: 0;
+    }
+    .doc-body {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      padding: 18px;
+    }
+    .doc-body a {
+      color: var(--gold);
+    }
+    .doc-body code {
+      color: #f0c85a;
+      background: #080808;
+      border: 1px solid #242424;
+      padding: 1px 4px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .doc-body pre code {
+      display: block;
+      padding: 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    .doc-body p,
+    .doc-body li {
+      color: var(--text);
+    }
+    .doc-body ul,
+    .doc-body ol {
+      margin: 10px 0 16px 22px;
+      padding: 0;
+    }
+    .doc-body li + li {
+      margin-top: 6px;
+    }
+    .doc-body blockquote {
+      margin: 16px 0;
+      padding: 10px 14px;
+      border-left: 3px solid var(--gold-dark);
+      background: #0b0b0b;
+      color: var(--muted);
+    }
+    .doc-body img {
+      max-width: 100%;
+      height: auto;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      padding: 0 18px 18px;
+    }
+    .doc-card {
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      border-left: 3px solid var(--gold-dark);
+      box-shadow: var(--bevel);
+    }
+    .doc-card:hover {
+      border-left-color: var(--gold);
+      background: #1d1d1d;
+    }
+    .doc-card span {
+      color: var(--gold);
+      font: 700 10px/1.1 var(--font);
+    }
+    .doc-card strong {
+      color: #efefef;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="index.html" aria-label="Shockless documentation home">
+        <span class="brand-mark">H</span>
+        <span><strong>Shockless</strong><small>Public docs</small></span>
+      </a>
+      <nav class="nav" aria-label="Documentation sections">
+        <a class="nav-link" href="index.html"><span>Home</span><small>Offline docs start page</small></a>
+<a class="nav-link" href="getting-started.html"><span>Getting Started</span><small>Run the portable app and import a profile</small></a>
+<a class="nav-link" href="building-from-source.html"><span>Build From Source</span><small>Install dependencies and package the app</small></a>
+<a class="nav-link" href="plugin-authoring.html"><span>Plugin Authoring</span><small>Create and install user plugins</small></a>
+<a class="nav-link" href="plugin-api.html"><span>Plugin API</span><small>Complete plugin API reference</small></a>
+<a class="nav-link" href="console-commands.html"><span>Console Commands</span><small>Backtick console command usage</small></a>
+<a class="nav-link active" href="multi-client.html"><span>Multi-Client</span><small>Visible and hidden session control</small></a>
+<a class="nav-link" href="engine-overview.html"><span>Engine Overview</span><small>Shockless runtime overview</small></a>
+<a class="nav-link" href="release-layout.html"><span>Release Layout</span><small>Files included in the public release</small></a>
+      </nav>
+    </aside>
+    <main class="content">
+      <section class="doc-window">
+        <div class="titlebar">
+          <div>
+            <p class="eyebrow">Shockless Documentation</p>
+            <h1>Multi-Client Sessions</h1>
+          </div>
+          <a class="status-pill" href="index.html">Index</a>
+        </div>
+        <div class="doc-body"><h2>Multi-Client Sessions</h2>
+<p>Shockless can keep more than one client session open at the same time. Use this</p>
+<p>for switching between visible clients, running hidden/headless sessions, testing</p>
+<p>plugins against more than one account, and sending console commands to one</p>
+<p>client or a group of clients.</p>
+<h3>Session Types</h3>
+<ul>
+<li>Visible sessions render in the GameHost. They can be selected from the</li>
+</ul>
+<p>  numbered session strip and show that client&#39;s own game view.</p>
+<ul>
+<li>Headless sessions run without a visible GameHost surface. They still log in,</li>
+</ul>
+<p>  parse packets, keep room/session state, write packet rows, and accept routed</p>
+<p>  console commands.</p>
+<ul>
+<li>Client 1 is the primary embedded client created by the normal Start flow.</li>
+</ul>
+<p>  Extra clients are assigned client ids such as client2, client3, and client4.</p>
+<p>Only the selected visible client is interactive. Hidden and inactive visible</p>
+<p>clients stay connected, but they do not take over the stage.</p>
+<h3>Account Text File</h3>
+<p>The <code>load</code> command can read a local text file that you create yourself. The file</p>
+<p>is not bundled with Shockless and should not be committed to source control.</p>
+<p>Use this repeating two-line format:</p>
+<pre><code>
+Habbo name
+email@example.com:password
+Second Habbo name
+second@example.com:password
+</code></pre>
+<p>Rules:</p>
+<ul>
+<li>The first line is the display label or Habbo name.</li>
+<li>The next line is the login email and password separated by the first colon.</li>
+<li>Repeat the two-line pair for each account.</li>
+<li>Blank lines are ignored.</li>
+<li>Use quotes around paths that contain spaces.</li>
+<li>Treat the file like a password file. Store it locally and do not share it.</li>
+</ul>
+<p>Example paths:</p>
+<pre><code>
+load &quot;C:\Shockless\accounts.txt&quot; 2 --headless
+load &quot;D:\Games\Shockless\accounts.txt&quot; 3 --concurrency 2
+</code></pre>
+<p>The app keeps credentials in memory only for the login flow. Console echo and</p>
+<p>session output show labels and status, not full credentials.</p>
+<h3>Loading Sessions</h3>
+<p>Start visible clients from a text file:</p>
+<pre><code>
+load &quot;C:\Shockless\accounts.txt&quot; 2 --concurrency 2
+</code></pre>
+<p>Start headless clients from a text file:</p>
+<pre><code>
+load &quot;C:\Shockless\accounts.txt&quot; 2 --headless --concurrency 2
+</code></pre>
+<p>Start one client directly from a credential pair:</p>
+<pre><code>
+login email@example.com:password --label &quot;Alt One&quot;
+login email@example.com:password --headless --label &quot;Alt One&quot;
+</code></pre>
+<p>Create a blank visible client for manual login:</p>
+<pre><code>
+newclient --label &quot;Manual Login&quot;
+</code></pre>
+<p>Do not include an account in the load file if that same account is already</p>
+<p>logged in as a visible session. Shockless tries to skip active visible usernames,</p>
+<p>but the clean workflow is to keep your already-logged-in main account out of</p>
+<p>the file you are loading.</p>
+<h3>Encrypted Account Store</h3>
+<p>For repeated use, import the same two-line file into the encrypted app-data</p>
+<p>account store. The key is read from an environment variable so it is not typed</p>
+<p>into the console.</p>
+<p>Set the environment variable before launching Shockless, then run:</p>
+<pre><code>
+accounts import &quot;C:\Shockless\accounts.txt&quot; --key-env HABBPY_V4_ACCOUNT_STORE_KEY
+accounts list --key-env HABBPY_V4_ACCOUNT_STORE_KEY
+accounts load 2 --headless --key-env HABBPY_V4_ACCOUNT_STORE_KEY --concurrency 2
+</code></pre>
+<p>Short form:</p>
+<pre><code>
+load-store 2 --headless --key-env HABBPY_V4_ACCOUNT_STORE_KEY
+</code></pre>
+<p>Remove the encrypted local store:</p>
+<pre><code>
+accounts clear
+</code></pre>
+<h3>Selecting And Closing Clients</h3>
+<p>List running clients:</p>
+<pre><code>
+list
+</code></pre>
+<p>Select a client:</p>
+<pre><code>
+select 2
+select &quot;Alt One&quot;
+</code></pre>
+<p>Rename a client label:</p>
+<pre><code>
+rename 2 &quot;Storage Alt&quot;
+</code></pre>
+<p>Close one client:</p>
+<pre><code>
+close 2
+</code></pre>
+<p>Close all extra clients while keeping the main client:</p>
+<pre><code>
+close all --keep-main
+</code></pre>
+<p>The Multi Account panel exposes the same actions through the GUI: load visible,</p>
+<p>load headless, load from store, select sessions, set mimic options, summon</p>
+<p>targets, and close individual extra sessions.</p>
+<h3>Targeting Commands</h3>
+<p>Prefix a command to choose where it runs:</p>
+<ul>
+<li><code>@2</code>: one client id.</li>
+<li><code>@main</code>: the configured main/summoner client.</li>
+<li><code>@all</code>: every running client.</li>
+<li><code>@visible</code>: visible clients.</li>
+<li><code>@headless</code>: headless clients.</li>
+<li><code>@Label</code>: a client label.</li>
+</ul>
+<p>Examples:</p>
+<pre><code>
+@2 say hello from client two
+@all wave
+@headless fps
+@main room
+</code></pre>
+<p>Without a target prefix, commands use the selected client where the command</p>
+<p>supports per-client routing.</p>
+<h3>Packet Log Filters</h3>
+<p>Packet rows include the client id and label so packets from multiple sessions</p>
+<p>can be distinguished.</p>
+<pre><code>
+packets all
+packets selected
+packets client 2
+packets client 3
+</code></pre>
+<p>The Packet Log panel has matching filters for all clients, the selected client,</p>
+<p>or a specific client id.</p>
+<h3>Summon</h3>
+<p>Summon moves other clients toward the configured main client when enough room</p>
+<p>context is available.</p>
+<p>Set the main client:</p>
+<pre><code>
+main 1
+</code></pre>
+<p>Summon one client:</p>
+<pre><code>
+summon 2
+</code></pre>
+<p>Summon all extra clients:</p>
+<pre><code>
+summon all
+</code></pre>
+<p>Summon only headless clients:</p>
+<pre><code>
+summon headless
+</code></pre>
+<p>Force private-room entry when the main private room id is known:</p>
+<pre><code>
+summon all --room
+summon 2 --main-room-id 224520 --main-room-name &quot;Codex Test LAB&quot;
+</code></pre>
+<p>If the visible main client is already inside a private room, the renderer adds</p>
+<p>the main username and room id to summon commands automatically. Visible target</p>
+<p>clients use a renderer handoff so their own mounted runtime enters the room.</p>
+<p>Headless clients use the hidden runtime and packet-backed room entry routes.</p>
+<p>Summon depends on live server state, friendship, room availability, and whether</p>
+<p>the target client has finished logging in. Use <code>list</code> after summon to confirm</p>
+<p>room state per client.</p>
+<h3>Mimic</h3>
+<p>Mimic forwards selected outgoing actions from one source client to the other</p>
+<p>clients through whitelisted packet routes.</p>
+<pre><code>
+mimic status
+mimic on --source 1
+mimic source 2
+mimic set movement on
+mimic set speech off
+mimic set actions on
+mimic set rooms off
+mimic off
+</code></pre>
+<p>Categories:</p>
+<ul>
+<li><code>movement</code>: walking and room movement packets.</li>
+<li><code>speech</code>: chat, shout, whisper, and typing routes.</li>
+<li><code>actions</code>: wave, dance, carry, sign, and look actions.</li>
+<li><code>rooms</code>: private-room join forwarding.</li>
+</ul>
+<p>Mimic never forwards login, encryption, ticket, machine id, or identity packets.</p>
+<h3>Common Workflows</h3>
+<p>Use two headless alts with a visible main:</p>
+<pre><code>
+load &quot;C:\Shockless\accounts.txt&quot; 2 --headless --concurrency 2
+wait 8000
+list
+summon headless
+</code></pre>
+<p>Use two visible alts that you can switch between:</p>
+<pre><code>
+load &quot;C:\Shockless\accounts.txt&quot; 2 --concurrency 2
+wait 8000
+select 2
+select 3
+select 1
+</code></pre>
+<p>Send one command to everyone:</p>
+<pre><code>
+@all say hello
+@all wave
+</code></pre>
+<p>Inspect one client&#39;s packets and parsed panel state:</p>
+<pre><code>
+select 2
+packets selected
+</code></pre>
+<h3>Notes And Limits</h3>
+<ul>
+<li>Headless sessions are designed for lower rendering overhead, but they still</li>
+</ul>
+<p>  run enough runtime state to parse packets and execute mapped actions.</p>
+<ul>
+<li>Very high account counts need the command-line/protocol headless work to keep</li>
+</ul>
+<p>  machine load low. Hidden runtime clients are heavier than a protocol-only</p>
+<p>  connection.</p>
+<ul>
+<li>Visible view switching should not log a client out. It hides inactive visible</li>
+</ul>
+<p>  stage surfaces instead of unmounting their runtime.</p>
+<ul>
+<li>Commands that need direct stage UI access require a visible selected client.</li>
+</ul>
+<p>  Relay-backed commands can target visible or headless clients.</p></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

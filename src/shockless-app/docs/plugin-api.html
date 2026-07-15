@@ -1,0 +1,1537 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shockless Plugin API</title>
+  <style>
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-goldfish.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-bold-goldfish.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: dark;
+      --font: "Volter Goldfish", "Segoe UI", Tahoma, sans-serif;
+      --font-read: "Segoe UI", Tahoma, Arial, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+      --bg: #040404;
+      --win: #0d0d0d;
+      --win-2: #141414;
+      --win-3: #1c1c1c;
+      --header: #161616;
+      --hl: #282828;
+      --sh: #000000;
+      --outline: #000000;
+      --line: #202020;
+      --text: #d7d7d7;
+      --muted: #9a9a9a;
+      --dim: #606060;
+      --gold: #e3b23a;
+      --gold-d: #b3851f;
+      --gold-deep: #1d1604;
+      --gold-line: #463713;
+      --green: #6fae54;
+      --red: #c8606f;
+      --blue: #b4b4b4;
+      --code: #080808;
+      --win-bevel: inset 2px 2px 0 var(--hl), inset -2px -2px 0 var(--sh);
+      --pressed-bevel: inset 2px 2px 0 var(--sh), inset -2px -2px 0 var(--hl);
+      --float: 0 10px 24px rgba(0, 0, 0, 0.5);
+      font-family: var(--font-read);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 12px),
+        linear-gradient(180deg, #0a0a0a 0%, #030303 100%);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    ::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--win-3);
+      border: 2px solid var(--bg);
+      box-shadow: inset 2px 2px 0 var(--hl), inset -2px -2px 0 var(--sh);
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code, pre {
+      font-family: var(--mono);
+      max-width: 100%;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 264px minmax(0, 1120px);
+      justify-content: center;
+      gap: 14px;
+      min-height: 100vh;
+      padding: 10px;
+      max-width: 100%;
+    }
+
+    .sidebar {
+      min-width: 0;
+      position: sticky;
+      top: 12px;
+      height: calc(100vh - 24px);
+      overflow: auto;
+      background: var(--win);
+      box-shadow: 0 0 0 2px var(--outline), inset 2px 2px 0 var(--hl), inset -2px -2px 0 var(--sh);
+      padding: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 56px;
+      padding: 8px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 12px;
+      background: var(--header);
+      box-shadow: inset 1px 1px 0 var(--hl), inset -1px -1px 0 var(--sh);
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #f0c14a, var(--gold-d));
+      color: #111;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 20px;
+      box-shadow: 0 0 0 2px var(--outline), inset 2px 2px 0 rgba(255, 255, 255, 0.24), inset -2px -2px 0 #6b4b08;
+      text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .brand h1 {
+      font-family: var(--font);
+      font-size: 15px;
+      margin: 0;
+      letter-spacing: 0;
+      color: #ededed;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 9px;
+      line-height: 1;
+    }
+
+    .search {
+      width: 100%;
+      border: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding: 10px 11px;
+      outline: none;
+      margin-bottom: 14px;
+      box-shadow: inset 2px 2px 0 var(--sh), inset -2px -2px 0 var(--hl);
+      font-family: var(--font-read);
+    }
+
+    .search:focus {
+      box-shadow: 0 0 0 2px var(--gold-line), inset 2px 2px 0 var(--sh), inset -2px -2px 0 var(--hl);
+    }
+
+    .search-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      margin-bottom: 7px;
+    }
+
+    .search-tools .search {
+      margin-bottom: 0;
+    }
+
+    .search-clear {
+      min-width: 54px;
+      border: 0;
+      background: linear-gradient(180deg, #1c1c1c, #0f0f0f);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 9px;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px var(--outline), var(--win-bevel);
+    }
+
+    .search-clear:hover {
+      color: var(--gold);
+    }
+
+    .search-status {
+      min-height: 16px;
+      margin: 0 0 12px 2px;
+      color: var(--dim);
+      font-size: 12px;
+    }
+
+    .no-search-results {
+      display: none;
+      margin: 18px 0;
+      padding: 12px 14px;
+      background: var(--gold-deep);
+      color: var(--muted);
+      box-shadow: 0 0 0 1px var(--gold-line), inset 1px 1px 0 rgba(255, 255, 255, 0.08), inset -1px -1px 0 var(--sh);
+    }
+
+    .no-search-results.visible {
+      display: block;
+    }
+
+    .nav-title {
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 9px;
+      text-transform: uppercase;
+      margin: 18px 6px 7px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 7px 8px 7px 10px;
+      color: var(--text);
+      border: 0;
+      font-family: var(--font);
+      font-size: 9px;
+      line-height: 1;
+      border-left: 2px solid transparent;
+      margin-bottom: 2px;
+    }
+
+    .nav-link:hover {
+      background: #181818;
+      border-left-color: var(--gold-line);
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .nav-link.active {
+      color: var(--gold);
+      background: #111;
+      border-left-color: var(--gold);
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    main {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--win-2), var(--win));
+      box-shadow: 0 0 0 2px var(--outline), var(--win-bevel), var(--float);
+      padding: clamp(20px, 3vw, 34px);
+    }
+
+    .hero {
+      padding: 0 0 18px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero h2 {
+      font-family: var(--font);
+      font-size: clamp(22px, 3vw, 32px);
+      line-height: 1.1;
+      margin: 0 0 10px;
+      letter-spacing: 0;
+      color: #ededed;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 900px;
+      color: var(--muted);
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      justify-content: start;
+      gap: 0;
+      margin: 18px 0 0;
+      border: 1px solid var(--line);
+      background: #090909;
+    }
+
+    .fact {
+      padding: 8px 16px 9px;
+      border-right: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .fact:last-child {
+      border-right: 0;
+    }
+
+    .fact strong {
+      display: block;
+      font-family: var(--font);
+      font-size: 18px;
+      color: var(--gold);
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .fact span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    section {
+      min-width: 0;
+      max-width: 100%;
+      margin: 30px 0;
+      padding: 0 0 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    section:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    section h2 {
+      border-bottom: 1px solid var(--line);
+      padding: 0 0 9px;
+      margin: 0 0 16px;
+      font-family: var(--font);
+      font-size: 18px;
+      letter-spacing: 0;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      color: #ededed;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .card, .api-card {
+      min-width: 0;
+      max-width: 100%;
+      background: transparent;
+      padding: 0;
+      box-shadow: none;
+    }
+
+    .api-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .api-card h4 {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 12px;
+      letter-spacing: 0;
+      color: var(--gold);
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .sig {
+      display: block;
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 10px;
+      background: var(--code);
+      color: #f2d675;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      box-shadow: inset 2px 2px 0 var(--sh), inset -2px -2px 0 var(--hl);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      color: var(--muted);
+      padding: 4px 7px;
+      font-family: var(--font);
+      font-size: 9px;
+      line-height: 1;
+      background: var(--bg);
+      box-shadow: 0 0 0 1px var(--line), inset 1px 1px 0 var(--hl), inset -1px -1px 0 var(--sh);
+    }
+
+    .tag.ready {
+      color: var(--green);
+      border-color: rgba(107, 196, 109, 0.45);
+    }
+
+    .tag.reserved {
+      color: var(--red);
+      border-color: rgba(221, 107, 98, 0.45);
+    }
+
+    .tag.visible {
+      color: var(--gold);
+      border-color: rgba(213, 165, 29, 0.45);
+    }
+
+    .details {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+    }
+
+    .details dt {
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+
+    .details dd {
+      margin: 0 0 5px;
+      color: var(--muted);
+    }
+
+    .method-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .method-group {
+      min-width: 0;
+      max-width: 100%;
+      background: transparent;
+      padding: 0;
+      margin: 0 0 30px;
+      box-shadow: none;
+    }
+
+    .method-group > p {
+      margin-top: 0;
+    }
+
+    pre {
+      margin: 10px 0 0;
+      padding: 12px;
+      background: var(--code);
+      overflow: auto;
+      max-width: 100%;
+      color: #dce6ea;
+      box-shadow: inset 2px 2px 0 var(--sh), inset -2px -2px 0 var(--hl);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .note {
+      background: var(--gold-deep);
+      padding: 12px 14px;
+      color: var(--muted);
+      box-shadow: 0 0 0 1px var(--gold-line), inset 1px 1px 0 rgba(255, 255, 255, 0.08), inset -1px -1px 0 var(--sh);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .example-box {
+      border-left: 3px solid var(--gold-line);
+      padding: 0 0 0 14px;
+    }
+
+    .wiki-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 0;
+      background: #0a0a0a;
+      border: 1px solid var(--line);
+      display: block;
+      overflow-x: auto;
+    }
+
+    .wiki-table th,
+    .wiki-table td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .wiki-table th {
+      background: var(--header);
+      color: #ededed;
+      font-family: var(--font);
+      font-size: 9px;
+      text-shadow: 2px 2px 0 #000;
+      white-space: nowrap;
+    }
+
+    .wiki-table td {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .wiki-table td:first-child {
+      color: var(--text);
+      width: 28%;
+    }
+
+    .wiki-table code {
+      color: #f2d675;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .wiki-table pre {
+      margin: 0;
+      max-width: min(420px, 72vw);
+      white-space: pre-wrap;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .facts, .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">H</div>
+        <div>
+          <h1>Plugin API</h1>
+          <p>Shockless Worker host</p>
+        </div>
+      </div>
+      <div class="search-tools">
+        <input class="search" id="search" type="search" placeholder="Search APIs, events, permissions, icons">
+        <button class="search-clear" id="clearSearch" type="button">Clear</button>
+      </div>
+      <div class="search-status" id="searchStatus">Type to filter this page.</div>
+      <div class="nav-title">Pages</div>
+      <a class="nav-link" href="#overview">Overview</a>
+      <a class="nav-link" href="#quickstart">Quickstart</a>
+      <a class="nav-link" href="#icons">Icons</a>
+      <a class="nav-link" href="#permissions">Permissions</a>
+      <a class="nav-link" href="#common-shapes">Common Shapes</a>
+      <a class="nav-link" href="#api-groups">API Groups</a>
+      <a class="nav-link" href="#recipes">Plugin Recipes</a>
+      <a class="nav-link" href="#events">Events</a>
+      <a class="nav-link" href="#bridge">Desktop Bridge</a>
+      <a class="nav-link" href="#limits">Current Limits</a>
+      <div class="nav-title">API Groups</div>
+      <div id="groupNav"></div>
+    </aside>
+
+    <main>
+      <header class="hero" id="overview">
+        <h2>Shockless Plugin API</h2>
+        <p>
+          This page lists every API exposed to user plugins by
+          <code>src/renderer/userPluginHost.ts</code>. Plugins run in a
+          restricted renderer Worker and use grouped APIs for game state,
+          packets, runtime control, avatar actions, furniture, typed domain
+          actions, social actions, storage, and session data.
+        </p>
+        <div class="facts">
+          <div class="fact"><strong>26</strong><span>API groups</span></div>
+          <div class="fact"><strong>89</strong><span>callable methods</span></div>
+          <div class="fact"><strong>23</strong><span>permissions</span></div>
+          <div class="fact"><strong>23</strong><span>named event families</span></div>
+        </div>
+      </header>
+      <div class="no-search-results" id="noSearchResults">No matching docs were found.</div>
+
+      <section id="quickstart">
+        <h2>Quickstart</h2>
+        <div class="two-col">
+          <div class="card">
+            <h3>Plugin Entry</h3>
+            <p>Each user plugin exports <code>activate(api)</code>. Return a disposer when the plugin subscribes to events.</p>
+            <pre><code>export async function activate(api) {
+  const { avatar, log, room, storage, subscriptions } = api;
+  const cleanup = subscriptions.create();
+  const enabled = await storage.get("enabled", true);
+  if (enabled) await avatar.wave();
+
+  cleanup.add(room.onReady((event) => {
+    log.info(`Ready in ${event.room?.name ?? "unknown"}`);
+  }));
+
+  return cleanup.dispose;
+}</code></pre>
+          </div>
+          <div class="card">
+            <h3>Manifest</h3>
+            <p>Permissions gate API calls and event delivery. Only request the permissions your plugin uses.</p>
+            <pre><code>{
+  "id": "room-tools",
+  "name": "Room Tools",
+  "version": "1.0.0",
+  "entry": "plugin.js",
+  "icon": "wrench",
+  "category": "room",
+  "permissions": ["ui.panel", "events.room", "engine.snapshot"],
+  "managedRuntime": {
+    "clientRights": []
+  },
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Room Tools",
+      "enabledByDefault": true,
+      "summary": "Room helper controls."
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="icons">
+        <h2>Icons</h2>
+        <p>
+          Use these manifest icon keys in <code>shockless.plugin.json</code>.
+          Unknown values are accepted but render as the fallback alert icon.
+        </p>
+        <div id="iconGrid"></div>
+      </section>
+
+      <section id="permissions">
+        <h2>Permissions</h2>
+        <div id="permissionGrid"></div>
+      </section>
+
+      <section id="common-shapes">
+        <h2>Common Shapes</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Client Targeting</h3>
+            <p>Most relay-backed action APIs accept <code>options.clientId</code>. If omitted, the selected client is used. Snapshot selectors and direct runtime control currently need the selected visible runtime.</p>
+            <pre><code>await avatar.wave({ clientId: 2 });
+await social.addUser("FriendName", { clientId: 3 });
+await engine.getSnapshot(2);</code></pre>
+          </div>
+          <div class="card">
+            <h3>Item Selectors</h3>
+            <p>Furniture helpers accept numeric ids, live item payloads, or selector objects. Text selectors search id, key, name, className, ownerName, query, text, and metadata title.</p>
+            <pre><code>await furni.findItems("chair");
+await furni.findItem({ className: "ads_fish_area", exact: true });
+await furni.pickupItem({ id: 12345, kind: "floor" });</code></pre>
+          </div>
+          <div class="card">
+            <h3>Wall Locations</h3>
+            <p>Wall movement needs wall and local coordinates plus orientation. You can pass absolute coordinates or deltas when a parsed wall item already has a base location.</p>
+            <pre><code>await furni.moveWallItem("poster", {
+  deltaX: 1,
+  deltaY: 0,
+  orientation: "r"
+});</code></pre>
+          </div>
+          <div class="card">
+            <h3>Packet Filters</h3>
+            <p>Packet hooks filter by direction plus optional <code>header</code> or <code>packetName</code>. Unknown headers must be shown as <code>UNKNOWN_HEADER</code>, not guessed.</p>
+            <pre><code>const off = packets.on("server", { packetName: "USERS" }, (packet) => {
+  log.info(packet.plainText);
+  return packet.allow();
+});</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="api-groups">
+        <h2>API Groups</h2>
+        <div id="apiGroups"></div>
+      </section>
+
+      <section id="events">
+        <h2>Events</h2>
+        <div id="eventGrid"></div>
+      </section>
+
+      <section id="recipes">
+        <h2>Plugin Recipes</h2>
+        <p>
+          These are realistic plugin ideas that can be built from the APIs on
+          this page. Each row names the main APIs, permissions, and a starter
+          shape so authors can see how the pieces fit together.
+        </p>
+        <div id="recipeGrid"></div>
+      </section>
+
+      <section id="bridge">
+        <h2>Desktop Bridge</h2>
+        <p>
+          User plugins should use the restricted Worker API above. These
+          <code>window.habbpyV4</code> methods are listed for maintainers because
+          the Worker API is built on top of them.
+        </p>
+        <div id="bridgeGrid"></div>
+      </section>
+
+      <section id="limits">
+        <h2>Current Limits</h2>
+        <table class="wiki-table">
+          <thead>
+            <tr><th>Limit</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>console.registerCommand()</code></td><td>Reserved for the command registry phase. Manifest command declarations can be persisted, but runtime registration is not active.</td></tr>
+            <tr><td><code>ui.registerSurface()</code> / <code>ui.updateSurface()</code></td><td>Implemented for host-rendered schema layouts. <code>ui.registerPanel()</code> is a compatibility alias, not a React/HTML panel hook.</td></tr>
+            <tr><td>Schema controls</td><td>Supported controls include headers, text, notices, sections, buttons, <code>buttonGrid</code>, toggles, inputs, selects, keybinds, key/value rows, logs, and selectable tables with <code>rowKey</code>, <code>selectedRowKey</code>, <code>rowAction</code>, and <code>maxRows</code>.</td></tr>
+            <tr><td><code>packets.send()</code></td><td>Implemented for client-to-server Shockwave packets through the validated builder. Known action helpers remain preferred for normal gameplay actions.</td></tr>
+            <tr><td>Selected visible runtime</td><td>Stage clicks, Navigator control, window clicks, room entry, client rights, and selector-based room object reads currently target the selected visible runtime. Chat helpers can route to target relay sessions for packet-backed modes.</td></tr>
+            <tr><td>Security boundary</td><td>User plugins do not receive Node, Electron, filesystem, account credentials, webhook values, or raw local test files.</td></tr>
+            <tr><td>Known actions</td><td>Use typed domain APIs for known actions. Use packet observation for discovery or local events when no first-class event exists yet.</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const iconKeys = [
+      ["activity", "Activity pulse; good for performance, status, or live tracking plugins."],
+      ["bot", "Automation/session helper icon."],
+      ["command", "Command or mapped action icon."],
+      ["hammer", "Builder or wall/furni editing icon."],
+      ["info", "Information and lookup icon."],
+      ["list", "Logs, packets, tables, and ordered data icon."],
+      ["map", "Rooms, Navigator, and location icon."],
+      ["messages", "Chat, social, and message icon."],
+      ["package", "Inventory, item, or bundle icon."],
+      ["plug", "Connection/session lifecycle icon."],
+      ["sofa", "Room furniture icon."],
+      ["terminal", "Developer console or diagnostics icon."],
+      ["user", "Avatar/user action icon."],
+      ["wrench", "Tools/settings/utility icon."]
+    ];
+
+    const permissions = [
+      ["ui.panel", "Declare a normal panel surface in the plugin rail."],
+      ["ui.status", "Declare a status surface for future status widgets."],
+      ["ui.overlay", "Declare an overlay surface."],
+      ["console.commands", "Reserve custom console command registration."],
+      ["engine.snapshot", "Read selected or summarized client runtime snapshots."],
+      ["engine.control", "Click stage/window UI or drive Navigator and room entry."],
+      ["notifications.show", "Show selected-client native top-right bulletin notifications."],
+      ["client.rights", "Read or mutate selected-client source Session rights."],
+      ["events.room", "Receive room lifecycle, room user, and room item events."],
+      ["events.chat", "Receive selected-room chat events."],
+      ["events.packet", "Receive packet events without mutation."],
+      ["events.session", "Read/list client sessions and receive session events."],
+      ["actions.avatar", "Send validated avatar movement and user action packets."],
+      ["actions.social", "Send validated messenger, friend, request, and follow packets."],
+      ["actions.fishing", "Send validated Fishing packets."],
+      ["actions.furni", "Send validated floor and wall furniture packets."],
+      ["actions.plants", "Send validated Gardening plant packets."],
+      ["actions.wallItems", "Send validated legacy wall item packets."],
+      ["chat.send", "Send room chat through chat.send(), chat.say(), chat.shout(), and chat.whisper()."],
+      ["storage", "Use plugin-scoped local storage."],
+      ["packet.read", "Read non-sensitive decrypted packet metadata."],
+      ["packet.inject", "Send validated client-to-server Shockwave packets through packets.send()."],
+      ["packet.intercept", "Reserve non-sensitive packet interception."],
+      ["packet.intercept.sensitive", "Allow sensitive packet families when explicitly granted."]
+    ];
+
+    const apiGroups = [
+      {
+        id: "plugin",
+        name: "plugin",
+        summary: "Immutable metadata for the active plugin.",
+        permission: "none",
+        methods: [
+          ["plugin.id", "string", "Stable plugin id from the manifest.", "Use for log labels or storage names when needed."],
+          ["plugin.name", "string", "Display name from the manifest.", "Use for user-facing log text."],
+          ["plugin.permissions", "string[]", "Permission list granted by the manifest.", "Use for optional feature checks."],
+          ["plugin.managedRuntime", "object|null", "Optional runtime cleanup contract from the manifest.", "Use managedRuntime.clientRights for right-granting plugins."],
+          ["plugin.surfaces", "object[]", "Manifest UI surfaces.", "Read-only surface metadata."]
+        ]
+      },
+      {
+        id: "log",
+        name: "log",
+        summary: "Write plugin timeline messages.",
+        permission: "none",
+        methods: [
+          ["log.info(message)", "void", "Writes an info timeline message.", "log.info('Plugin ready')"],
+          ["log.warn(message)", "void", "Writes a warning timeline message.", "log.warn('No room data yet')"],
+          ["log.error(message)", "void", "Writes an error timeline message.", "log.error(error.message)"]
+        ]
+      },
+      {
+        id: "subscriptions",
+        name: "subscriptions",
+        summary: "Collect event and packet disposers for readable plugin shutdown.",
+        permission: "none",
+        methods: [
+          ["subscriptions.create()", "CleanupCollector", "Returns { add, addAll, dispose } for cleanup.add(room.onReady(...)) style scripts.", "const cleanup = subscriptions.create()"]
+        ]
+      },
+      {
+        id: "events",
+        name: "events",
+        summary: "Subscribe to host events, emit plugin-local events, and derive events from packets.",
+        permission: "depends on event family",
+        methods: [
+          ["events.on(name, handler)", "() => void", "Subscribes to an event and returns a disposer.", "const off = events.on('room.ready', handler)"],
+          ["events.once(name, options?)", "Promise<payload>", "Waits for the next event. Supports { timeoutMs } or { timeout }.", "await events.once('room.ready', { timeoutMs: 15000 })"],
+          ["events.waitFor(name, options?)", "Promise<payload>", "Readable alias for events.once().", "await events.waitFor('room.ready', { timeoutMs: 15000 })"],
+          ["events.emit(name, payload?)", "true", "Emits a plugin-local custom event inside the same Worker.", "events.emit('myPlugin.ready', { ok: true })"],
+          ["events.defineFromPacket(eventName, direction, filter, mapper)", "() => void", "Creates a plugin-local event from matching packet rows. Mapper return undefined to skip.", "events.defineFromPacket('plants.watered', 'server', { header: 540 }, p => ({ packet: p }))"]
+        ]
+      },
+      {
+        id: "packets",
+        name: "packets",
+        summary: "Observe packet rows and send validated client-to-server Shockwave packets.",
+        permission: "events.packet, packet.read, packet.intercept, or packet.inject",
+        methods: [
+          ["packets.summary(packet)", "PacketSummary", "Returns a compact packet object for logs or storage.", "await storage.remember('packet', packets.summary(packet))"],
+          ["packets.hasName(packet, ...names)", "boolean", "Checks exact or containing packet-name matches.", "if (packets.hasName(packet, 'messenger', 'friend')) return packet.allow()"],
+          ["packets.field(packet, labelOrRegex)", "DecodedField|null", "Finds a decoded field by label string or regex.", "const name = packets.field(packet, /friend \d+ name/i)?.value"],
+          ["packets.on(direction, filter, handler)", "() => void", "Subscribes to packet events. Direction is server, client, all, or *.", "packets.on('server', { packetName: 'USERS' }, packet => packet.allow())"],
+          ["packets.once(direction, filter, options?)", "Promise<PacketEvent>", "Waits for the next matching packet. Supports { timeoutMs }.", "await packets.once('server', { header: 28 }, { timeoutMs: 5000 })"],
+          ["packets.waitFor(direction, filter, options?)", "Promise<PacketEvent>", "Readable alias for packets.once().", "await packets.waitFor('server', { packetName: 'USERS' })"],
+          ["packets.send(clientId, packet)", "Promise<Result>", "Requires packet.inject. Sends a validated client packet through the target client's relay control path. Supports header, packetName, bodyBytes, bodyHex, bodyText, bodyEscapedText, or full packetText.", "await packets.send(2, { packetName: 'WAVE' })"]
+        ]
+      },
+      {
+        id: "timers",
+        name: "timers",
+        summary: "Safe async timing helper.",
+        permission: "none",
+        methods: [
+          ["timers.sleep(ms)", "Promise<void>", "Waits for a non-negative duration in milliseconds.", "await timers.sleep(500)"]
+        ]
+      },
+      {
+        id: "chat",
+        name: "chat",
+        summary: "Send chat and subscribe to parsed room chat messages.",
+        permission: "chat.send or events.chat",
+        methods: [
+          ["chat.send(message, options?)", "Promise<Result>", "Sends normal room chat. Selected visible clients use the Director helper; other clients use validated CHAT [52].", "await chat.say('hello')"],
+          ["chat.say(message, options?)", "Promise<Result>", "Readable alias for normal room chat.", "await chat.say('hello')"],
+          ["chat.shout(message, options?)", "Promise<Result>", "Sends room shout through validated SHOUT [55].", "await chat.shout('hello')"],
+          ["chat.whisper(targetName, message, options?)", "Promise<Result>", "Sends room whisper through validated WHISPER [56].", "await chat.whisper('dek', 'hello')"],
+          ["chat.onMessage(handler)", "() => void", "Subscribes to parsed chat.message events.", "cleanup.add(chat.onMessage(({ text }) => log.info(text)))"]
+        ]
+      },
+      {
+        id: "stage",
+        name: "stage",
+        summary: "Click or capture clicks on the Director stage.",
+        permission: "engine.control for stage.click, ui.overlay for capture",
+        methods: [
+          ["stage.click(x, y, options?)", "Promise<Result>", "Routes a stage click through the selected visible runtime and refreshes snapshots/logs. Options may include shiftDown, controlDown, optionDown, commandDown, or aliases shift/ctrl/alt/meta.", "await stage.click(420, 315, { shiftDown: true })"],
+          ["stage.captureNextClick(options?)", "Promise<{ x, y, clientId }>", "Shows a temporary Shockless overlay and resolves with the next selected visible stage point. Supports timeoutMs.", "const point = await stage.captureNextClick({ timeoutMs: 15000 })"],
+          ["stage.nextClick(options?)", "Promise<{ x, y, clientId }>", "Readable alias for stage.captureNextClick().", "const point = await stage.nextClick()"]
+        ]
+      },
+      {
+        id: "room",
+        name: "room",
+        summary: "Readable room state and room event helpers.",
+        permission: "events.room or engine.snapshot depending on method",
+        methods: [
+          ["room.getState(options?)", "Promise<Snapshot>", "Readable selected-runtime snapshot request.", "const snapshot = await room.getState()"],
+          ["room.itemKey(item) / room.userKey(user)", "string", "Stable keys for live state maps.", "items.set(room.itemKey(item), item)"],
+          ["room.objectId(item)", "number|null", "Extracts the numeric room object/item id when available.", "const id = room.objectId(item)"],
+          ["room.summarizeItem(item)", "RoomItemSummary|null", "Returns compact UI/storage-safe item facts.", "await storage.remember('item', room.summarizeItem(item))"],
+          ["room.summarizeItems(items)", "RoomItemSummary[]", "Summarizes a list of live room item payloads.", "const rows = room.summarizeItems(event.items)"],
+          ["room.countItems(event)", "{ users, floor, wall, all }", "Counts users/floor/wall/all item rows from a room item event.", "const counts = room.countItems(event)"],
+          ["room.floorItemsFromSnapshot(snapshot)", "RoomItem[]", "Extracts floor/passive objects from a runtime snapshot.", "const items = room.floorItemsFromSnapshot(snapshot)"],
+          ["room.wallItemsFromSnapshot(snapshot)", "RoomItem[]", "Extracts wall objects from a runtime snapshot.", "const wallItems = room.wallItemsFromSnapshot(snapshot)"],
+          ["room.keepSelectedItem(selected, items)", "RoomItem|null", "Preserves a selected item by id across room updates.", "selected = room.keepSelectedItem(selected, event.items)"],
+          ["room.keepSelectedWallItem(selected, items)", "RoomItem|null", "Wall-item alias for preserving selected wall objects.", "selectedWall = room.keepSelectedWallItem(selectedWall, event.wallItems)"],
+          ["room.onReady(handler)", "() => void", "Subscribes to room.ready.", "cleanup.add(room.onReady(handler))"],
+          ["room.onUsers(handler)", "() => void", "Subscribes to room.users.", "cleanup.add(room.onUsers(handler))"],
+          ["room.onUserJoined/Left(handler)", "() => void", "Subscribes to visitor deltas.", "cleanup.add(room.onUserJoined(({ user }) => log.info(user.name)))"],
+          ["room.onItems(handler)", "() => void", "Subscribes to full parsed room item payloads.", "cleanup.add(room.onItems(handler))"],
+          ["room.onItemAdded/Updated/Removed(handler)", "() => void", "Subscribes to generic item deltas.", "cleanup.add(room.onItemUpdated(handler))"],
+          ["room.onFloorItemAdded/Updated/Removed(handler)", "() => void", "Subscribes to floor/passive item deltas.", "cleanup.add(room.onFloorItemAdded(handler))"],
+          ["room.onWallItemAdded/Updated/Removed(handler)", "() => void", "Subscribes to wall item deltas.", "cleanup.add(room.onWallItemUpdated(handler))"]
+        ]
+      },
+      {
+        id: "rooms",
+        name: "rooms",
+        summary: "Enter private or public rooms through the runtime.",
+        permission: "engine.control",
+        methods: [
+          ["rooms.enterPrivateRoom(flatId, options?)", "Promise<Result>", "Runs private room entry for the selected visible runtime and waits until ready.", "await rooms.enterPrivateRoom(12345)"],
+          ["rooms.enterPublicRoom(query, options?)", "Promise<Result>", "Runs public room Navigator entry for the selected visible runtime.", "await rooms.enterPublicRoom('Infobus Park')"],
+          ["rooms.leave(options?)", "Promise<Result>", "Leaves the current room through the typed QUIT [53] room relay action. Supports options.clientId.", "await rooms.leave({ clientId })"]
+        ]
+      },
+      {
+        id: "navigator",
+        name: "navigator",
+        summary: "Open the game Navigator.",
+        permission: "engine.control",
+        methods: [
+          ["navigator.open(view = 'nav_pr', options?)", "Promise<Result>", "Opens a Navigator view in the selected visible runtime.", "await navigator.open('nav_pr')"]
+        ]
+      },
+      {
+        id: "windows",
+        name: "windows",
+        summary: "Click known Director window elements.",
+        permission: "engine.control",
+        methods: [
+          ["windows.clickElement(windowId, elementId, options?)", "Promise<Result>", "Clicks a known runtime window element by id. Requires selected visible runtime.", "await windows.clickElement('Room_bar', 'int_hand_image')"]
+        ]
+      },
+      {
+        id: "avatar",
+        name: "avatar",
+        summary: "Walk and perform user actions with validated packets.",
+        permission: "actions.avatar",
+        methods: [
+          ["avatar.walkTo(x, y, furniId = 0, options?)", "Promise<Result>", "Sends the Origins room movement packet. Supports options.clientId.", "await avatar.walkTo(6, 8, 0, { clientId: 2 })"],
+          ["avatar.walkToItem(selector, options?)", "Promise<Result & { target }>", "Resolves a live floor/passive item by id/name/class/query and walks to its tile. Requires engine.snapshot.", "await avatar.walkToItem('pumpkin')"],
+          ["avatar.walkToArea(selector, options?)", "Promise<Result & { target }>", "Resolves a direct tile or live floor/passive area selector, then walks through the avatar movement packet. Object selectors require engine.snapshot.", "await avatar.walkToArea({ className: 'ads_fish_area', exact: true })"],
+          ["avatar.walkToUser(selector, options?)", "Promise<Result & { target }>", "Resolves a live room user by name/accountId/roomIndex/rowId and walks to their tile. Use options.offset to stand beside them. Requires engine.snapshot.", "await avatar.walkToUser('dek', { offset: { x: 1, y: 0 } })"],
+          ["avatar.wave(options?)", "Promise<Result>", "Sends the wave action. Supports options.clientId.", "await avatar.wave({ clientId: 2 })"],
+          ["avatar.dance(number = 1, options?)", "Promise<Result>", "Starts dance number 1-4 through the user relay. Supports options.clientId.", "await avatar.dance(2)"],
+          ["avatar.stopDance(options?)", "Promise<Result>", "Stops dancing. Supports options.clientId.", "await avatar.stopDance()"],
+          ["avatar.hcDance(number = 1, options?)", "Promise<Result>", "Sends the HC dance action. Supports options.clientId.", "await avatar.hcDance(1)"],
+          ["avatar.carryDrink(options?)", "Promise<Result>", "Sends the carry drink action. Supports options.clientId.", "await avatar.carryDrink()"],
+          ["avatar.applyLook(figure, options?)", "Promise<Result>", "Applies a non-empty Habbo figure string through the user relay. Supports options.clientId.", "await avatar.applyLook(figureString)"]
+        ]
+      },
+      {
+        id: "teleport",
+        name: "teleport",
+        summary: "Enter teleport-style floor items without writing packet code.",
+        permission: "actions.furni, engine.snapshot, and actions.avatar unless walk is false",
+        methods: [
+          ["teleport.enter(selector, options?)", "Promise<Result & { item, walk }>", "Resolves a floor item by id/name/class/query, optionally walks to it, then uses it through SET_STUFF_DATA [74].", "await teleport.enter({ query: 'teleport', kind: 'floor' })"]
+        ]
+      },
+      {
+        id: "social",
+        name: "social",
+        summary: "Messenger, friend request, and follow actions.",
+        permission: "actions.social",
+        methods: [
+          ["social.message(accountId, message, options?)", "Promise<Result>", "Sends a private message to numeric accountId. options.recipient is display/log context.", "await social.message(123456, 'hello', { recipient: 'FriendName' })"],
+          ["social.addUser(name, options?)", "Promise<Result>", "Sends a friend request by username. Supports options.clientId.", "await social.addUser('FriendName')"],
+          ["social.refreshRequests(options?)", "Promise<Result>", "Requests the current friend request list. Supports options.clientId.", "await social.refreshRequests()"],
+          ["social.acceptRequest(accountId, options?)", "Promise<Result>", "Accepts a numeric friend request id. Supports options.clientId.", "await social.acceptRequest(123456)"],
+          ["social.declineRequest(accountId, options?)", "Promise<Result>", "Declines a numeric friend request id. Supports options.clientId.", "await social.declineRequest(123456)"],
+          ["social.removeFriend(accountId, options?)", "Promise<Result>", "Removes a friend by numeric account id. Supports options.clientId.", "await social.removeFriend(123456)"],
+          ["social.followFriend(accountId, options?)", "Promise<Result>", "Follows a friend by numeric account id. Supports options.clientId.", "await social.followFriend(123456)"]
+        ]
+      },
+      {
+        id: "plants",
+        name: "plants",
+        summary: "Find plant-like room objects, plan a v3-style move/action/return cycle, and send typed Gardening actions.",
+        permission: "engine.snapshot for discovery/planning; actions.plants for packet-backed actions",
+        methods: [
+          ["plants.getState(options?)", "Promise<PlantState>", "Returns room readiness, occupants, all plant-like floor/passive items, and the current cycle plan. Supports options.clientId.", "const state = await plants.getState()"],
+          ["plants.findPlants(selector = {}, options?)", "Promise<PlantPayload[]>", "Finds plant-like room objects by id, className, query, ownerName, or exact selector.", "const plantsInRoom = await plants.findPlants({ query: 'plant' })"],
+          ["plants.planCycle(selector = {}, options?)", "Promise<PlantCyclePlan|null>", "Resolves one plant plus original tile, preferred working tile, candidate working tiles near the avatar, and suggested action order without sending packets.", "const plan = await plants.planCycle({ query: 'pumpkin' })"],
+          ["plants.runCycle(selector = {}, options?)", "Promise<Result & { plan, results, confirmed }>", "Runs move -> water -> harvest -> return, or move -> compost with confirmed removal. It polls live runtime state and supports settleMs, pollIntervalMs, moveTimeoutMs, moveRetryLimit, actionTimeoutMs, actionRetryLimit, compostTimeoutMs, compostAttemptLimit, and options.clientId.", "await plants.runCycle('plant', { settleMs: 350, moveTimeoutMs: 3000, actionTimeoutMs: 2500 })"],
+          ["plants.movePlant(objectId, x, y, direction = 0, options?)", "Promise<Result>", "Moves a plant/floor object to a tile. Supports options.clientId.", "await plants.movePlant(1001, 7, 8, 2)"],
+          ["plants.waterPlant(objectId, options?)", "Promise<Result>", "Waters a plant object. Supports options.clientId.", "await plants.waterPlant(1001)"],
+          ["plants.harvestPlant(objectId, options?)", "Promise<Result>", "Harvests a plant object. Supports options.clientId.", "await plants.harvestPlant(1001)"],
+          ["plants.compostPlant(objectId, options?)", "Promise<Result>", "Composts a plant object. Supports options.clientId.", "await plants.compostPlant(1001)"]
+        ]
+      },
+      {
+        id: "wallItems",
+        name: "wallItems",
+        summary: "Native wall item placement toggle plus validated wall item movement helpers.",
+        permission: "actions.wallItems, engine.control for native toggle",
+        methods: [
+          ["wallItems.setAnywherePlacementEnabled(enabled, options?)", "Promise<Result>", "Toggles native Object Mover compatibility so normal wall-item drag/drop can place outside visible wall bounds.", "await wallItems.setAnywherePlacementEnabled(true)"],
+          ["wallItems.locationFromStagePoint(item, point, options?)", "Promise<{ location, item }>", "Builds a wall/local/orientation location from an existing wall item and a stage point.", "const location = await wallItems.locationFromStagePoint(item, point)"],
+          ["wallItems.moveAnywhere(item, pointOrLocation, options?)", "Promise<Result>", "Moves a wall item to a clicked stage point or full wall/local location.", "await wallItems.moveAnywhere(item, point)"],
+          ["wallItems.placeAnywhere(item, pointOrLocation, options?)", "Promise<Result>", "Alias for wallItems.moveAnywhere used by click-to-place plugins.", "await wallItems.placeAnywhere(item, point)"],
+          ["wallItems.moveItem(item, options?)", "Promise<Result>", "Moves a wall item with itemId, wallX, wallY, localX, localY, orientation.", "await wallItems.moveItem({ itemId: 99, wallX: 1, wallY: 2, localX: 3, localY: 4, orientation: 'l' })"],
+          ["wallItems.pickupItem(itemId, options?)", "Promise<Result>", "Picks up a wall item by numeric id.", "await wallItems.pickupItem(99)"]
+        ]
+      },
+      {
+        id: "filters",
+        name: "filters",
+        summary: "Local render and chat filters owned by the active plugin.",
+        permission: "engine.control",
+        methods: [
+          ["filters.getHiddenUsers(options?)", "Promise<{ entries }>", "Returns this plugin's active hidden-user entries.", "const { entries } = await filters.getHiddenUsers()"],
+          ["filters.setHiddenUsers(entries, options?)", "Promise<{ entries }>", "Replaces this plugin's hidden-user names/account ids. Cleared when the plugin is disabled.", "await filters.setHiddenUsers(['SomeUser', '233421'])"],
+          ["filters.addHiddenUser(target, options?)", "Promise<{ entries }>", "Adds one Habbo name or numeric account id to this plugin's local hide filter.", "await filters.addHiddenUser('SomeUser')"],
+          ["filters.removeHiddenUser(target, options?)", "Promise<{ entries }>", "Removes one Habbo name or numeric account id from this plugin's local hide filter.", "await filters.removeHiddenUser('SomeUser')"],
+          ["filters.clearHiddenUsers(options?)", "Promise<{ entries }>", "Clears this plugin's hidden-user filter.", "await filters.clearHiddenUsers()"]
+        ]
+      },
+      {
+        id: "furni",
+        name: "furni",
+        summary: "Find, move, rotate, pick up, and control native placement for floor or wall furniture.",
+        permission: "engine.snapshot for find/selectors, actions.furni for actions, engine.control for native placement toggles",
+        methods: [
+          ["furni.wallMoveLocation(item, options?)", "WallMoveLocation|null", "Builds a wall move selector/location from parsed wall/local coordinates. Supports deltaX, deltaY, and orientation.", "const next = furni.wallMoveLocation(poster, { deltaX: 1 })"],
+          ["furni.findItems(selector = {}, options?)", "Promise<RoomItemPayload[]>", "Finds live room items by selector. options.kind can be floor, wall, or all.", "const chairs = await furni.findItems({ query: 'chair', kind: 'floor' })"],
+          ["furni.findItem(selector = {}, options?)", "Promise<RoomItemPayload | null>", "Returns the first matching live room item.", "const poster = await furni.findItem({ kind: 'wall', query: 'poster' })"],
+          ["furni.setAnywherePlacementEnabled(enabled, options?)", "Promise<Result>", "Toggles native Object Mover compatibility so normal floor-item drag/drop can place outside visible room tiles.", "await furni.setAnywherePlacementEnabled(true)"],
+          ["furni.moveFloorItem(selector, x, y, direction = null, options?)", "Promise<Result & { item }>", "Moves a floor/passive item. Numeric ids can avoid snapshot lookup when x/y/direction are supplied.", "await furni.moveFloorItem('chair', 5, 7, 2)"],
+          ["furni.setFloorItemLocation(selector, x, y, height = 0, options?)", "Promise<Result & { item }>", "Uses Origins' precise floor-location packet ORIGINS_SET_FURNI_LOCATION [1257]. Use for wide floor coordinates; keep normal tile moves on moveFloorItem().", "await furni.setFloorItemLocation(12345, 14, 11, 0)"],
+          ["furni.rotateFloorItem(selector, direction, options?)", "Promise<Result & { item }>", "Rotates a floor/passive item while preserving/resolving tile coordinates.", "await furni.rotateFloorItem(12345, 4)"],
+          ["furni.useFloorItem(selector, value = '0', options?)", "Promise<Result & { item }>", "Uses a floor/passive item through SET_STUFF_DATA [74]. Numeric ids can avoid snapshot lookup; selectors require engine.snapshot.", "await furni.useFloorItem({ query: 'switch', kind: 'floor' }, '0')"],
+          ["furni.pickupFloorItem(selector, options?)", "Promise<Result & { item }>", "Picks up a floor/passive item by id or selector.", "await furni.pickupFloorItem({ objectId: 12345 })"],
+          ["furni.moveWallItem(selector, location, options?)", "Promise<Result & { item }>", "Moves a wall item by absolute wall/local coordinates or delta from parsed location.", "await furni.moveWallItem('poster', { deltaX: 1 })"],
+          ["furni.pickupWallItem(selector, options?)", "Promise<Result & { item }>", "Picks up a wall item by id or selector.", "await furni.pickupWallItem('poster')"],
+          ["furni.pickupItem(selector, options?)", "Promise<Result & { item }>", "Picks up floor or wall item. Include kind or use a selector resolvable from snapshot.", "await furni.pickupItem({ id: 12345, kind: 'floor' })"]
+        ]
+      },
+      {
+        id: "fishing",
+        name: "fishing",
+        summary: "Fishing state and typed Fishing packets.",
+        permission: "actions.fishing and sometimes engine.snapshot/actions.avatar",
+        methods: [
+          ["fishing.getState(options?)", "Promise<FishingState>", "Reads room Fishing areas, occupants, target, packet Fishing cache, and safety status. Areas include tile and walkCandidates with selfDistance. Packet state includes lastClientTargetId and activeTile from STATUS fsh rows, and removed ACTIVEOBJECT_REMOVE ids are filtered from stale runtime rows. Requires engine.snapshot.", "const state = await fishing.getState()"],
+          ["fishing.walkToArea(areaIdOrOptions?, options?)", "Promise<Result & { target }>", "Walks to a parsed Fishing area. Requires actions.fishing, actions.avatar, and engine.snapshot.", "await fishing.walkToArea()"],
+          ["fishing.startFishing(areaId, options?)", "Promise<Result>", "Starts fishing at a numeric area id. Supports options.clientId.", "await fishing.startFishing(area.id)"],
+          ["fishing.minigameInput(direction, options?)", "Promise<Result>", "Sends minigame input. Direction must be L or R.", "await fishing.minigameInput('L')"],
+          ["fishing.purchaseProduct(productCode, options?)", "Promise<Result>", "Purchases a Fishing product by product code.", "await fishing.purchaseProduct('rod_bronze')"],
+          ["fishing.registerDerby(options?)", "Promise<Result>", "Registers for derby.", "await fishing.registerDerby()"],
+          ["fishing.requestTokens(options?)", "Promise<Result>", "Requests token/balance data.", "await fishing.requestTokens()"],
+          ["fishing.requestProducts(options?)", "Promise<Result>", "Requests product data.", "await fishing.requestProducts()"],
+          ["fishing.requestRodLevel(options?)", "Promise<Result>", "Requests rod level data.", "await fishing.requestRodLevel()"],
+          ["fishing.requestStats(options?)", "Promise<Result>", "Requests Fishing stats.", "await fishing.requestStats()"],
+          ["fishing.requestFishopedia(options?)", "Promise<Result>", "Requests Fishopedia data.", "await fishing.requestFishopedia()"]
+        ]
+      },
+      {
+        id: "runtime",
+        name: "runtime",
+        summary: "Readable selected-runtime snapshot helpers.",
+        permission: "engine.snapshot",
+        methods: [
+          ["runtime.getSnapshot(options?)", "Promise<Snapshot>", "Readable form of engine.getSnapshot(clientId).", "const snapshot = await runtime.getSnapshot()"],
+          ["runtime.onSnapshot(handler)", "() => void", "Subscribes to runtime.snapshot and returns a disposer.", "cleanup.add(runtime.onSnapshot(({ room }) => log.info(room?.name)))"]
+        ]
+      },
+      {
+        id: "engine",
+        name: "engine",
+        summary: "Read runtime snapshots.",
+        permission: "engine.snapshot",
+        methods: [
+          ["engine.getSnapshot(clientId?)", "Promise<EngineRuntimeSnapshot | ClientRuntimeSummary | null>", "Returns full selected runtime snapshot, or available runtime summary/null for another client.", "const snapshot = await engine.getSnapshot()"]
+        ]
+      },
+      {
+        id: "client",
+        name: "client",
+        summary: "Clientside source Session rights.",
+        permission: "client.rights",
+        methods: [
+          ["client.getRights(options?)", "Promise<Result>", "Reads selected visible runtime Session.user_rights.", "const rights = await client.getRights()"],
+          ["client.setRights(rights, options?)", "Promise<Result>", "Replaces rights with an array or comma/space-separated string.", "await client.setRights(['fuse_habbo_chooser'])"],
+          ["client.grantRights(rights, options?)", "Promise<Result>", "Adds rights to the selected visible runtime.", "await client.grantRights('fuse_debug_window')"],
+          ["client.removeRights(rights, options?)", "Promise<Result>", "Removes rights from the selected visible runtime.", "await client.removeRights(['fuse_debug_window'])"],
+          ["client.enableChooserCommands(options?)", "Promise<Result>", "Advanced convenience wrapper for chooser-related source runtime rights; no public addon enables it by default.", "await client.enableChooserCommands()"]
+        ]
+      },
+      {
+        id: "notifications",
+        name: "notifications",
+        summary: "Show selected-client native top-right bulletin notifications.",
+        permission: "notifications.show",
+        methods: [
+          ["notifications.showBulletin(notification)", "Promise<Result>", "Shows a native Shockless bulletin through the live notification manager. Supports title, message/body/text, imageName, titleColor, backgroundColor, and selected visible clientId.", "await notifications.showBulletin({ title: 'DM Received from dek', message: '18:43 - hello' })"]
+        ]
+      },
+      {
+        id: "session",
+        name: "session",
+        summary: "Read multi-client session state.",
+        permission: "events.session",
+        methods: [
+          ["session.getClients()", "Promise<ClientSessionList>", "Returns selectedClientId, mainClientId, and client summaries.", "const clients = await session.getClients()"],
+          ["session.onSelected(handler)", "() => void", "Subscribes to selected-client changes.", "cleanup.add(session.onSelected(({ clientId }) => log.info(clientId)))"]
+        ]
+      },
+      {
+        id: "storage",
+        name: "storage",
+        summary: "Plugin-scoped persistence.",
+        permission: "storage",
+        methods: [
+          ["storage.get(key, fallbackValue = null)", "Promise<any>", "Reads JSON data. Returns fallback when null or undefined.", "const enabled = await storage.get('enabled', true)"],
+          ["storage.set(key, value)", "Promise<true>", "Stores JSON data under the plugin id and key.", "await storage.set('enabled', true)"],
+          ["storage.remember(key, value)", "Promise<true>", "Stores { value, updatedAt } without repeating timestamp boilerplate.", "await storage.remember('lastRoom', event.room)"],
+          ["storage.delete(key)", "Promise<true>", "Deletes one plugin-scoped key.", "await storage.delete('enabled')"]
+        ]
+      },
+      {
+        id: "console",
+        name: "console",
+        summary: "Reserved console command registration.",
+        permission: "console.commands",
+        methods: [
+          ["console.registerCommand(command)", "Promise<{ ok: false, message }>", "Reserved for the command registry phase. It validates permission but does not register commands yet.", "await console.registerCommand({ name: 'mycmd' })"]
+        ]
+      },
+      {
+        id: "ui",
+        name: "ui",
+        summary: "Host-rendered schema UI registration and updates.",
+        permission: "ui.panel",
+        methods: [
+          ["ui.registerSurface(surface)", "Promise<{ ok, message }>", "Create or replace a host-rendered schema surface. surface.layout must be non-empty.", "await ui.registerSurface({ id: 'panel', layout })"],
+          ["ui.registerPanel(surface)", "Promise<{ ok, message }>", "Compatibility alias for registerSurface; it does not mount React or HTML.", "await ui.registerPanel({ id: 'panel', layout })"],
+          ["ui.updateSurface(surfaceId, layout)", "Promise<{ ok, message }>", "Replace a declared schema surface at runtime.", "await ui.updateSurface('panel', layout)"],
+          ["ui.setValue(key, value)", "Promise<{ ok, message }>", "Update a schema control value displayed by the host renderer.", "await ui.setValue('enabled', true)"],
+          ["ui.onAction(handler)", "dispose function", "Subscribe to schema control events from buttons, button grids, selectable table rows, toggles, inputs, selects, and keybinds.", "const off = ui.onAction((event) => log.info(event.action))"]
+        ]
+      }
+    ];
+
+    const events = [
+      ["session.selected", "events.session", "{ clientId, session, mainClientId }", "Fires when selected client changes."],
+      ["runtime.snapshot", "engine.snapshot", "{ clientId, room, snapshot }", "Fires when selected runtime snapshot updates."],
+      ["room.changed", "events.room", "{ clientId, room }", "Fires when room key changes."],
+      ["room.ready", "events.room", "{ clientId, room }", "Fires when a room becomes ready."],
+      ["room.users", "events.room", "{ clientId, room, users, initial }", "Initial/current room user list."],
+      ["room.userJoined", "events.room", "{ clientId, room, user, initial }", "A non-existing user appears in the selected room."],
+      ["room.userLeft", "events.room", "{ clientId, room, user }", "A previous user disappears from the selected room."],
+      ["room.items", "events.room", "{ clientId, room, counts, items, floorItems, wallItems, initial }", "Initial or changed room item list."],
+      ["room.floorItemsLoaded", "events.room", "{ clientId, room, items, floorItems, initial }", "Initial floor/passive item load."],
+      ["room.wallItemsLoaded", "events.room", "{ clientId, room, items, wallItems, initial }", "Initial wall item load."],
+      ["room.itemAdded", "events.room", "{ clientId, room, item, previous }", "Any room object added."],
+      ["room.itemUpdated", "events.room", "{ clientId, room, item, previous }", "Any room object changed."],
+      ["room.itemRemoved", "events.room", "{ clientId, room, item, previous }", "Any room object removed."],
+      ["room.floorItemAdded", "events.room", "{ clientId, room, item, previous }", "Floor/passive item added."],
+      ["room.floorItemUpdated", "events.room", "{ clientId, room, item, previous }", "Floor/passive item changed."],
+      ["room.floorItemRemoved", "events.room", "{ clientId, room, item, previous }", "Floor/passive item removed."],
+      ["room.wallItemAdded", "events.room", "{ clientId, room, item, previous }", "Wall item added."],
+      ["room.wallItemUpdated", "events.room", "{ clientId, room, item, previous }", "Wall item changed."],
+      ["room.wallItemRemoved", "events.room", "{ clientId, room, item, previous }", "Wall item removed."],
+      ["chat.message", "events.chat", "{ clientId, room, index, timestamp, userName, userId, mode, text }", "New selected-room chat entry."],
+      ["packet", "events.packet or packet.read/intercept", "PacketEvent", "Any new packet row with a known header number."],
+      ["packet.client", "events.packet or packet.read/intercept", "PacketEvent", "New client packet row."],
+      ["packet.server", "events.packet or packet.read/intercept", "PacketEvent", "New server packet row."]
+    ];
+
+    const bridgeMethods = [
+      "getAppInfo()", "getAppPreferences()", "setAppPreferences(patch)",
+      "getPluginRegistryState()", "setPluginEnabled(pluginId, enabled)",
+      "setPluginSurfaceEnabled(pluginId, surfaceId, enabled)", "reloadPlugins()",
+      "openPluginsFolder()", "createPluginFromTemplate(request)",
+      "installPluginFromFolder()", "readPluginEntrySource(pluginId)",
+      "getClientLibraryState()", "getClientSessions()", "getClientSnapshot(clientId?)",
+      "getClientSnapshots()", "selectClientSession(clientId)",
+      "renameClientSession(clientId, label)", "runConsoleCommand(input)",
+      "runConsoleBinding(key)", "getConsoleCommandState()", "getMimicState()",
+      "importClientReference()", "onProfileImportProgress(listener)",
+      "setActiveClientProfile(profileRoot)", "getEngineLaunchState()",
+      "setEngineLaunchSettings(patch)", "startEmbeddedEngine()",
+      "stopEmbeddedEngine()", "submitVisibleClientLogin(clientId, webContentsId)",
+      "getRelayLogSnapshot()", "getRelayLogDeltaSnapshot(currentLogPath, afterLineNumber)",
+      "getFurniMetadataSnapshot()", "lookupOriginsUser(name)",
+      "sendRoomRelayAction(action, clientId?)", "sendFishingRelayAction(action, clientId?)",
+      "sendGardeningRelayAction(action, clientId?)", "sendUserRelayAction(action, clientId?)",
+      "sendSocialRelayAction(action, clientId?)", "sendWallMoverRelayAction(action, clientId?)",
+      "sendFurniRelayAction(action, clientId?)"
+    ];
+
+    const recipes = [
+      {
+        name: "Welcome Message",
+        build: "Greet each non-self user when they enter the room.",
+        permissions: "events.room, chat.send, storage",
+        apis: "room.onUserJoined(), chat.say(), storage.get/set()",
+        notes: "Use storage to remember greeted users if you do not want repeat welcomes after reconnects.",
+        code: `export function activate({ room, chat, log, subscriptions }) {
+  const cleanup = subscriptions.create();
+  cleanup.add(room.onUserJoined(async ({ user }) => {
+    if (user.isSelf || !user.name) return;
+    await chat.say(\`Welcome \${user.name}!\`);
+    log.info(\`Welcomed \${user.name}\`);
+  }));
+  return cleanup.dispose;
+}`
+      },
+      {
+        name: "Auto Hide Bulletin",
+        build: "Click a known runtime window element after login or room-ready when the bulletin/news window exists.",
+        permissions: "engine.snapshot, engine.control, events.room",
+        apis: "events.waitFor('room.ready'), runtime.getSnapshot(), windows.clickElement()",
+        notes: "Window ids/elements must come from the live runtime snapshot. Do not blindly click screen coordinates.",
+        code: `export async function activate({ events, runtime, windows, log }) {
+  await events.waitFor("room.ready", { timeoutMs: 30000 });
+  const snapshot = await runtime.getSnapshot();
+  const news = snapshot?.windowState?.windowIds?.find((id) =>
+    /bulletin|welcome|news/i.test(String(id))
+  );
+  if (news) {
+    await windows.clickElement(news, "close");
+    log.info("Closed bulletin window.");
+  }
+}`
+      },
+      {
+        name: "Room Visitor Tracker",
+        build: "Maintain a current/seen visitor list and log joins/leaves.",
+        permissions: "events.room, storage",
+        apis: "room.onUsers(), room.onUserJoined(), room.onUserLeft(), storage.set()",
+        notes: "Use accountId/name from the user payload. Bots are flagged with isBot/kind.",
+        code: `export function activate({ room, storage, log, subscriptions }) {
+  const cleanup = subscriptions.create();
+  const seen = new Set();
+  cleanup.add(room.onUserJoined(async ({ user }) => {
+    if (user.isBot || !user.name) return;
+    seen.add(user.name);
+    await storage.set("seenUsers", [...seen]);
+    log.info(\`\${user.name} joined.\`);
+  }));
+  cleanup.add(room.onUserLeft(({ user }) => {
+    if (!user.isBot && user.name) log.info(\`\${user.name} left.\`);
+  }));
+  return cleanup.dispose;
+}`
+      },
+      {
+        name: "Move All Matching Furni",
+        build: "Find items by name/class and move, rotate, use, or pick them up using typed furni APIs.",
+        permissions: "engine.snapshot, actions.furni",
+        apis: "furni.findItems(), furni.moveFloorItem(), furni.pickupItem()",
+        notes: "Selector-based lookup requires the selected rendered client. Numeric ids can target other clients when already known.",
+        code: `export async function activate({ furni, timers, log }) {
+  const mats = await furni.findItems({ query: "mat", kind: "floor" });
+  for (const [index, item] of mats.entries()) {
+    await furni.moveFloorItem(item, 4 + index, 7, item.tile?.direction ?? 0);
+    await timers.sleep(250);
+  }
+  log.info(\`Moved \${mats.length} matching item(s).\`);
+}`
+      },
+      {
+        name: "Plant Water Harvest Cycle",
+        build: "Find a plant-like item, move it near the avatar, water it, harvest it, and return it to the original tile.",
+        permissions: "engine.snapshot, actions.plants",
+        apis: "plants.findPlants(), plants.planCycle(), plants.movePlant(), plants.waterPlant(), plants.harvestPlant(), plants.compostPlant(), plants.runCycle()",
+        notes: "Use plants.runCycle(selector, { mode: 'compost' }) for compost-only work. Use the low-level calls when you need custom timing, confirmation, or retry logic.",
+        code: `export async function activate({ plants, timers, log }) {
+  const plan = await plants.planCycle({ query: "plant" });
+  if (!plan) return log.warning("No plant with tile data found.");
+
+  await plants.movePlant(plan.objectId, plan.working.x, plan.working.y, plan.working.direction);
+  await timers.sleep(700);
+  await plants.waterPlant(plan.objectId);
+  await timers.sleep(900);
+  await plants.harvestPlant(plan.objectId);
+  await timers.sleep(900);
+  await plants.movePlant(plan.objectId, plan.original.x, plan.original.y, plan.original.direction);
+}`
+      },
+      {
+        name: "Packet Discovery Event",
+        build: "Create a local event from raw packets before the host has a first-class named event.",
+        permissions: "events.packet, packet.read",
+        apis: "packets.on(), packets.waitFor(), events.defineFromPacket(), events.on()",
+        notes: "Packet-derived events are local to the plugin. Promote stable discoveries into host events later.",
+        code: `export function activate({ events, log }) {
+  const offPacket = events.defineFromPacket(
+    "custom.usersPacket",
+    "server",
+    { packetName: "USERS" },
+    (packet) => ({ count: packet.decodedFields.length, packet })
+  );
+  const offEvent = events.on("custom.usersPacket", ({ count }) => {
+    log.info(\`USERS packet decoded fields: \${count}\`);
+  });
+  return () => { offPacket(); offEvent(); };
+}`
+      },
+      {
+        name: "Validated Packet Sender",
+        build: "Send a client packet that does not yet have a typed helper, while keeping login/key packets blocked.",
+        permissions: "packet.inject, packet.read",
+        apis: "packets.send(), packets.waitFor()",
+        notes: "Use typed APIs for normal actions. Raw packet send accepts known packetName values or numeric headers plus one byte-safe body source.",
+        code: `export async function activate({ packets, session, log }) {
+  const clients = await session.getClients();
+  const clientId = clients.selectedClientId;
+  const result = await packets.send(clientId, { packetName: "WAVE" });
+  log.info(result.ok ? "Wave packet sent." : result.message);
+}`
+      },
+      {
+        name: "Multi-Client Action Panel",
+        build: "List all sessions and run avatar/social actions against specific client ids.",
+        permissions: "events.session, actions.avatar, actions.social",
+        apis: "session.getClients(), avatar.wave({ clientId }), social.addUser(name, { clientId })",
+        notes: "Relay-backed actions can target client ids. Snapshot-driven selector APIs still need selected rendered client data.",
+        code: `export async function activate({ session, avatar, log }) {
+  const state = await session.getClients();
+  for (const client of state.clients) {
+    if (client.status !== "running") continue;
+    await avatar.wave({ clientId: client.id });
+    log.info(\`Waved from client\${client.id}\`);
+  }
+}`
+      },
+      {
+        name: "Room Item Alert",
+        build: "React when a watched item appears, moves, or disappears.",
+        permissions: "events.room",
+        apis: "room.onItemAdded(), room.onItemUpdated(), room.onItemRemoved()",
+        notes: "Use item.searchText, item.className, item.ownerName, tile, and wallLocation instead of reparsing packets.",
+        code: `export function activate({ room, log, subscriptions }) {
+  const cleanup = subscriptions.create();
+  cleanup.add(room.onItemUpdated(({ item, previous }) => {
+    log.info(\`\${item.name ?? item.className} changed from \${previous?.state} to \${item.state}\`);
+  }));
+  return cleanup.dispose;
+}`
+      }
+    ];
+
+    function tagClass(text) {
+      if (String(text).includes("Reserved") || String(text).includes("reserve")) return "reserved";
+      if (String(text).includes("selected visible")) return "visible";
+      if (String(text) === "none") return "ready";
+      return "";
+    }
+
+    function esc(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function methodRow(method, group) {
+      const [signature, returns, description, example] = method;
+      return `
+        <tr data-search="${esc(`${group.name} ${signature} ${returns} ${description} ${example} ${group.permission}`.toLowerCase())}">
+          <td><code>${esc(signature)}</code></td>
+          <td><code>${esc(returns)}</code></td>
+          <td>${esc(description)}</td>
+          <td><pre><code>${esc(example)}</code></pre></td>
+        </tr>`;
+    }
+
+    function render() {
+      document.getElementById("iconGrid").innerHTML = `
+        <table class="wiki-table">
+          <thead><tr><th>Icon key</th><th>Suggested use</th></tr></thead>
+          <tbody>
+            ${iconKeys.map(([name, text]) => `
+              <tr data-search="${esc(`icon ${name} ${text}`.toLowerCase())}">
+                <td><code>${esc(name)}</code></td>
+                <td>${esc(text)}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+
+      document.getElementById("permissionGrid").innerHTML = `
+        <table class="wiki-table">
+          <thead><tr><th>Permission</th><th>Allows</th></tr></thead>
+          <tbody>
+            ${permissions.map(([name, text]) => `
+              <tr data-search="${esc(`${name} ${text}`.toLowerCase())}">
+                <td><code>${esc(name)}</code></td>
+                <td>${esc(text)}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+
+      document.getElementById("groupNav").innerHTML = apiGroups.map((group) =>
+        `<a class="nav-link" href="#group-${esc(group.id)}">${esc(group.name)}</a>`
+      ).join("");
+
+      document.getElementById("apiGroups").innerHTML = apiGroups.map((group) => `
+        <div class="method-group" id="group-${esc(group.id)}" data-search="${esc(`${group.name} ${group.summary} ${group.permission}`.toLowerCase())}">
+          <h3>${esc(group.name)}</h3>
+          <p>${esc(group.summary)}</p>
+          <div class="meta">
+            <span class="tag ${tagClass(group.permission)}">Permission: ${esc(group.permission)}</span>
+            <span class="tag ready">${group.methods.length} item${group.methods.length === 1 ? "" : "s"}</span>
+          </div>
+          <table class="wiki-table">
+            <thead><tr><th>Method</th><th>Returns</th><th>What it does</th><th>Example</th></tr></thead>
+            <tbody>${group.methods.map((method) => methodRow(method, group)).join("")}</tbody>
+          </table>
+        </div>`).join("");
+
+      document.getElementById("eventGrid").innerHTML = `
+        <table class="wiki-table">
+          <thead><tr><th>Event</th><th>Permission</th><th>Payload</th><th>When it fires</th></tr></thead>
+          <tbody>
+            ${events.map(([name, permission, payload, text]) => `
+              <tr data-search="${esc(`${name} ${permission} ${payload} ${text}`.toLowerCase())}">
+                <td><code>${esc(name)}</code></td>
+                <td>${esc(permission)}</td>
+                <td><pre><code>${esc(payload)}</code></pre></td>
+                <td>${esc(text)}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+
+      document.getElementById("recipeGrid").innerHTML = `
+        <table class="wiki-table recipe-table">
+          <thead><tr><th>Plugin</th><th>What it builds</th><th>APIs</th><th>Starter code</th></tr></thead>
+          <tbody>
+            ${recipes.map((recipe) => `
+              <tr data-search="${esc(`${recipe.name} ${recipe.build} ${recipe.permissions} ${recipe.apis} ${recipe.notes} ${recipe.code}`.toLowerCase())}">
+                <td><strong>${esc(recipe.name)}</strong><br><span class="tag">${esc(recipe.permissions)}</span></td>
+                <td>${esc(recipe.build)}<br><small>${esc(recipe.notes)}</small></td>
+                <td>${esc(recipe.apis)}</td>
+                <td><pre><code>${esc(recipe.code)}</code></pre></td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+
+      document.getElementById("bridgeGrid").innerHTML = `
+        <table class="wiki-table">
+          <thead><tr><th>Bridge method</th></tr></thead>
+          <tbody>
+            ${bridgeMethods.map((method) => `
+              <tr data-search="${esc(method.toLowerCase())}"><td><code>${esc(method)}</code></td></tr>`).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    function filterDocs(query) {
+      const normalized = query.trim().toLowerCase();
+      let visibleRows = 0;
+      let visibleSections = 0;
+
+      for (const node of document.querySelectorAll("[data-search]")) {
+        const hit = !normalized || node.getAttribute("data-search").includes(normalized);
+        node.classList.toggle("hidden", !hit);
+        if (hit && node.matches("tr")) visibleRows += 1;
+      }
+
+      for (const group of document.querySelectorAll(".method-group")) {
+        const visibleMethod = group.querySelector("tbody tr:not(.hidden)");
+        const groupHit = !normalized || group.getAttribute("data-search").includes(normalized);
+        group.classList.toggle("hidden", !(visibleMethod || groupHit));
+      }
+
+      for (const section of document.querySelectorAll("main section")) {
+        const sectionHit = !normalized || section.textContent.toLowerCase().includes(normalized);
+        const visibleDataRows = section.querySelectorAll("[data-search]:not(.hidden)").length;
+        const visibleMethodGroups = section.querySelectorAll(".method-group:not(.hidden)").length;
+        const visible = sectionHit || visibleDataRows > 0 || visibleMethodGroups > 0;
+        section.classList.toggle("hidden", !visible);
+        if (visible) visibleSections += 1;
+      }
+
+      for (const link of document.querySelectorAll(".nav-link[href^='#']")) {
+        const target = document.querySelector(link.getAttribute("href"));
+        link.classList.toggle("hidden", Boolean(normalized && target?.classList.contains("hidden")));
+      }
+
+      const status = document.getElementById("searchStatus");
+      const noResults = document.getElementById("noSearchResults");
+      if (!normalized) {
+        status.textContent = "Type to filter this page.";
+        noResults.classList.remove("visible");
+        return;
+      }
+      status.textContent = `${visibleSections} section${visibleSections === 1 ? "" : "s"}, ${visibleRows} row${visibleRows === 1 ? "" : "s"} matched.`;
+      noResults.classList.toggle("visible", visibleSections === 0);
+    }
+
+    render();
+    const searchInput = document.getElementById("search");
+    searchInput.addEventListener("input", (event) => filterDocs(event.target.value));
+    document.getElementById("clearSearch").addEventListener("click", () => {
+      searchInput.value = "";
+      filterDocs("");
+      searchInput.focus();
+    });
+  </script>
+</body>
+</html>

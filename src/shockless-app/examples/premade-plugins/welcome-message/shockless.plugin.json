@@ -1,0 +1,31 @@
+{
+  "id": "welcome-message",
+  "name": "Welcome Message",
+  "version": "1.0.0",
+  "author": "Shockless example",
+  "description": "Sends a configurable room chat welcome when a new user appears in the current room.",
+  "entry": "plugin.js",
+  "icon": "messages",
+  "category": "room",
+  "permissions": ["ui.panel", "events.room", "chat.send", "engine.snapshot", "storage"],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Welcome Message",
+      "enabledByDefault": true,
+      "summary": "Configure and monitor automatic room welcome messages."
+    }
+  ],
+  "commands": [
+    {
+      "name": "welcome",
+      "description": "Show or change the welcome message template."
+    },
+    {
+      "name": "welcome-test",
+      "description": "Send a test welcome message through the selected client."
+    }
+  ],
+  "hotkeys": []
+}

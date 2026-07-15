@@ -1,0 +1,34 @@
+{
+  "id": "premade-injection",
+  "name": "Injection Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Injection module.",
+  "entry": "plugin.js",
+  "icon": "terminal",
+  "category": "developer",
+  "permissions": [
+    "ui.panel",
+    "console.commands",
+    "packet.inject",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Injection Panel",
+      "enabledByDefault": false,
+      "summary": "Raw Shockwave packet editor, validation, saved packets, and history."
+    }
+  ],
+  "commands": [
+    {
+      "name": "injection.rawPacketSend",
+      "label": "Send Raw Packet",
+      "description": "Build and send validated raw Shockwave packets from the Injection panel or backtick console.",
+      "usage": "injection.rawPacketSend"
+    }
+  ],
+  "hotkeys": []
+}

@@ -1,0 +1,68 @@
+{
+  "id": "premade-connection",
+  "name": "Connection Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Connection module.",
+  "entry": "plugin.js",
+  "icon": "plug",
+  "category": "session",
+  "permissions": [
+    "ui.panel",
+    "ui.status",
+    "console.commands",
+    "events.session",
+    "engine.snapshot",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Connection Panel",
+      "enabledByDefault": true,
+      "summary": "Session, profile, and lifecycle controls in the dock."
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Connection Status",
+      "enabledByDefault": true,
+      "summary": "Connection state shown in the bottom strip."
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Connection Lifecycle Commands",
+      "enabledByDefault": true,
+      "summary": "Launch and stop controls once embed plumbing is available."
+    }
+  ],
+  "commands": [
+    {
+      "name": "shell.togglePluginDock",
+      "label": "Toggle Plugin Dock",
+      "description": "Collapse or expand the Shockless plugin dock without touching game input.",
+      "usage": "shell.togglePluginDock"
+    },
+    {
+      "name": "engine.launchEmbedded",
+      "label": "Launch Embedded Shockless",
+      "description": "Attach the selected ready Shockless client profile inside the Shockless GameHost.",
+      "usage": "engine.launchEmbedded"
+    },
+    {
+      "name": "engine.consoleStart",
+      "label": "Console Start Client",
+      "description": "Start the selected or targeted client through the backtick console command bus.",
+      "usage": "engine.consoleStart"
+    },
+    {
+      "name": "client.importReference",
+      "label": "Import Or Build Client Profile",
+      "description": "Register an existing Shockless profile folder, or build a playable profile from a compiled client folder when no matching cache exists.",
+      "usage": "client.importReference"
+    }
+  ],
+  "hotkeys": []
+}

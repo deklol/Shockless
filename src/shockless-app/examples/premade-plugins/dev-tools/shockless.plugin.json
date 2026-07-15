@@ -1,0 +1,64 @@
+{
+  "id": "premade-dev-tools",
+  "name": "Dev Tools Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Dev Tools module.",
+  "entry": "plugin.js",
+  "icon": "wrench",
+  "category": "developer",
+  "permissions": [
+    "ui.panel",
+    "ui.overlay",
+    "ui.status",
+    "console.commands",
+    "events.session",
+    "engine.snapshot",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Dev Tools Panel",
+      "enabledByDefault": true,
+      "summary": "Shockless diagnostics and inspection tools."
+    },
+    {
+      "id": "overlay",
+      "kind": "overlay",
+      "label": "Dev Tools Dev Overlay",
+      "enabledByDefault": false,
+      "summary": "Hit-test and sprite debug overlays above the game."
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Dev Tools Dev Status",
+      "enabledByDefault": true,
+      "summary": "FPS, errors, and profile doctor signals."
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Dev Tools Dev Commands",
+      "enabledByDefault": true,
+      "summary": "Screenshot capture, visual diff, and diagnostic commands."
+    }
+  ],
+  "commands": [
+    {
+      "name": "room.captureScreenshot",
+      "label": "Capture Game Screenshot",
+      "description": "Capture the embedded game surface for visual QA and regression evidence.",
+      "usage": "room.captureScreenshot"
+    },
+    {
+      "name": "devTools.gpuDiagnostics",
+      "label": "GPU Diagnostics",
+      "description": "Report launch GPU switches and WebGL renderer/vendor facts for visible or hidden clients.",
+      "usage": "devTools.gpuDiagnostics"
+    }
+  ],
+  "hotkeys": []
+}

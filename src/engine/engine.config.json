@@ -1,0 +1,7 @@
+{
+  "comment": "Public placeholder paths. Set these to local extracted/generated directories when developing the engine from source.",
+  "originsSourceRoot": "generated/source",
+  "originsClientRoot": "generated/client",
+  "runtimeDataRoot": "generated/runtime-data",
+  "decodedAssetsRoot": "generated/assets"
+}

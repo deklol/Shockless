@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {},
+    "moduleResolution": "bundler",
+    "types": ["node", "vite/client"],
+    "noEmit": true
+  },
+  "include": ["src", "tests", "vite.config.ts"]
+}

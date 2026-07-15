@@ -1,0 +1,77 @@
+{
+  "id": "premade-multi-account",
+  "name": "Multi Account Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Multi Account module.",
+  "entry": "plugin.js",
+  "icon": "bot",
+  "category": "session",
+  "permissions": [
+    "ui.panel",
+    "console.commands",
+    "events.session",
+    "engine.snapshot",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Multi Account Panel",
+      "enabledByDefault": true,
+      "summary": "Sessions, loading, summon, and mimic controls in one module.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Session overview",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Read selected, main, visible, and headless client state."
+        },
+        {
+          "type": "button",
+          "label": "Refresh Client List",
+          "action": "multiAccount.refresh",
+          "variant": "primary"
+        }
+      ]
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Multi Account Commands",
+      "enabledByDefault": true,
+      "summary": "newclient/load/accounts/main/summon/mimic commands through the backtick console."
+    }
+  ],
+  "commands": [
+    {
+      "name": "user.mimicForwarding",
+      "label": "User Mimic Forwarding",
+      "description": "Forward whitelisted v3-style avatar/chat/action packets from one source client to other sessions.",
+      "usage": "user.mimicForwarding"
+    },
+    {
+      "name": "multiAccount.newVisibleClient",
+      "label": "New Visible Client",
+      "description": "Start a blank visible Shockless runtime for manual login and select it.",
+      "usage": "multiAccount.newVisibleClient"
+    },
+    {
+      "name": "multiAccount.loadSessions",
+      "label": "Load Accounts",
+      "description": "Start multiple hidden Shockless runtime clients from a local account file or encrypted account store.",
+      "usage": "multiAccount.loadSessions"
+    },
+    {
+      "name": "multiAccount.summonClients",
+      "label": "Summon Clients",
+      "description": "Bring target clients to the configured main account through friend-follow or private-room entry.",
+      "usage": "multiAccount.summonClients"
+    }
+  ],
+  "hotkeys": []
+}

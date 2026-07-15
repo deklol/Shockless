@@ -1,0 +1,71 @@
+import type { PluginDefinition } from "../../shared/plugin.js";
+
+export const socialPlugin: PluginDefinition = {
+    id: "social",
+    name: "Social",
+    category: "social",
+    icon: "messages",
+    enabledByDefault: false,
+    status: "mapped",
+    summary: "Friends, badges, private messages, friend requests, visitors, and chat status.",
+    capabilities: [
+      "Packet-backed friends list",
+      "Friend search",
+      "Packet-backed private messages",
+      "Private message top-right notifications",
+      "Packet-backed friend requests",
+      "Scoped private message relay command",
+      "Scoped friend request relay command",
+      "Friend request accept/decline controls",
+      "Friend remove/follow controls",
+      "Friend request refresh control",
+      "Badge summary",
+      "Visitors split",
+      "Chat split",
+      "Profile lookup",
+    ],
+    uiSurfaces: [
+      {
+        id: "panel",
+        kind: "panel",
+        label: "Social Panel",
+        enabledByDefault: true,
+        summary: "Social status and split panels.",
+      },
+      {
+        id: "status",
+        kind: "status",
+        label: "Social Status",
+        enabledByDefault: true,
+        summary: "Account and notification status in the bottom strip.",
+      },
+      {
+        id: "private-message-notifications",
+        kind: "overlay",
+        label: "Private Message Notifications",
+        enabledByDefault: true,
+        summary: "Received private messages in the native top-right notification box.",
+      },
+      {
+        id: "commands",
+        kind: "commands",
+        label: "Social Commands",
+        enabledByDefault: false,
+        summary: "Chat, combined user lookup, private message, friend request, accept, decline, follow, and remove commands.",
+      },
+    ],
+    sourceMapping: {
+      habbpyV3: ["habbpy/tabs/info_tab.py", "habbpy/tabs/visitors_tab.py", "habbpy/tabs/chat_tab.py"],
+      shockless: [
+        "%APPDATA%/Shockless/logs/shockless-relay.log",
+        "src/main/relayLog.ts",
+        "src/shared/socialRelayPackets.ts",
+        "src/main/relay/originsRelayV4.ts social control scope",
+        "docs/REMOTE_PLAY_API.md",
+        "Official Origins public user lookup where applicable",
+        "engine/src/app/main.ts showBulletinNotification helper",
+      ],
+      notes:
+        "Social reads packet-backed friends, private messages, and friend requests. The Private Message Notifications surface listens to live MESSENGER_MESSAGE [134] rows and renders them through the source bulletin notification manager. Backtick console lookup combines in-game runtime rows, decoded USERS rows, parsed social rows, and the official Origins public API. message/adduser/requests/accept/decline/remove/follow commands use scoped v3-equivalent relay packets for headers 33, 39, 233, 37, 38, 40, and 262.",
+    },
+  };

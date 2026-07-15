@@ -1,0 +1,8 @@
+portable/
+artifacts/
+*.zip
+*.7z
+*.log
+node_modules/
+dist/
+clients/

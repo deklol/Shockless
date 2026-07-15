@@ -1,0 +1,56 @@
+{
+  "id": "premade-packet-log",
+  "name": "Packet Log Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Packet Log module.",
+  "entry": "plugin.js",
+  "icon": "list",
+  "category": "developer",
+  "permissions": [
+    "ui.panel",
+    "ui.status",
+    "packet.read",
+    "events.packet",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Packet Log Panel",
+      "enabledByDefault": false,
+      "summary": "Packet/action log filters and detail view.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Packet capture",
+          "level": 3
+        },
+        {
+          "type": "toggle",
+          "id": "capturePackets",
+          "label": "Capture packet summaries",
+          "defaultValue": true,
+          "action": "packetLog.setCapture"
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Packet Log Traffic Status",
+      "enabledByDefault": false,
+      "summary": "Compact traffic/error count readout."
+    }
+  ],
+  "commands": [
+    {
+      "name": "packetLog.readRelayLog",
+      "label": "Read Relay Packet Log",
+      "description": "Tail the embedded Shockless relay log and parse client/server packet rows, payload byte counts, decrypted bodies, v3 names, and decoded packet-family fields into the Packet Log panel.",
+      "usage": "packetLog.readRelayLog"
+    }
+  ],
+  "hotkeys": []
+}

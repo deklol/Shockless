@@ -1,0 +1,167 @@
+{
+  "id": "premade-social",
+  "name": "Social Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Social module.",
+  "entry": "plugin.js",
+  "icon": "messages",
+  "category": "social",
+  "permissions": [
+    "ui.panel",
+    "ui.status",
+    "ui.overlay",
+    "console.commands",
+    "events.room",
+    "engine.snapshot",
+    "events.chat",
+    "events.packet",
+    "packet.read",
+    "actions.social",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Social Panel",
+      "enabledByDefault": true,
+      "summary": "Social status and split panels.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Social actions",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Send friend requests, messenger messages, and request lifecycle actions through validated social helpers."
+        },
+        {
+          "type": "section",
+          "title": "Friend",
+          "children": [
+            {
+              "type": "textInput",
+              "id": "friendName",
+              "label": "Name",
+              "placeholder": "Habbo name",
+              "action": "social.set.friendName"
+            },
+            {
+              "type": "numberInput",
+              "id": "accountId",
+              "label": "Account Id",
+              "defaultValue": 0,
+              "action": "social.set.accountId"
+            },
+            {
+              "type": "button",
+              "label": "Add User",
+              "action": "social.addUser",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Follow Friend",
+              "action": "social.followFriend",
+              "variant": "default"
+            }
+          ]
+        },
+        {
+          "type": "section",
+          "title": "Message",
+          "children": [
+            {
+              "type": "textInput",
+              "id": "recipient",
+              "label": "Recipient",
+              "placeholder": "name or id",
+              "action": "social.set.recipient"
+            },
+            {
+              "type": "textInput",
+              "id": "message",
+              "label": "Message",
+              "placeholder": "message text",
+              "action": "social.set.message"
+            },
+            {
+              "type": "button",
+              "label": "Send Message",
+              "action": "social.message",
+              "variant": "primary"
+            }
+          ]
+        },
+        {
+          "type": "section",
+          "title": "Requests",
+          "children": [
+            {
+              "type": "button",
+              "label": "Refresh Requests",
+              "action": "social.refreshRequests",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Accept Request",
+              "action": "social.acceptRequest",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Decline Request",
+              "action": "social.declineRequest",
+              "variant": "default"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Social Status",
+      "enabledByDefault": true,
+      "summary": "Account and notification status in the bottom strip."
+    },
+    {
+      "id": "private-message-notifications",
+      "kind": "overlay",
+      "label": "Social Private Message Notifications",
+      "enabledByDefault": true,
+      "summary": "Received private messages in the native top-right notification box."
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Social Commands",
+      "enabledByDefault": false,
+      "summary": "Chat, combined user lookup, private message, friend request, accept, decline, follow, and remove commands."
+    }
+  ],
+  "commands": [
+    {
+      "name": "social.sendPrivateMessage",
+      "label": "Send Private Message",
+      "description": "Send a private messenger line through the scoped v3-equivalent Social relay packet.",
+      "usage": "social.sendPrivateMessage"
+    },
+    {
+      "name": "social.requestFriend",
+      "label": "Send Friend Request",
+      "description": "Send a friend request through the scoped v3-equivalent Social relay packet.",
+      "usage": "social.requestFriend"
+    },
+    {
+      "name": "social.friendLifecycle",
+      "label": "Friend Lifecycle Actions",
+      "description": "Refresh requests, accept/decline requests, remove friends, and follow friends using mapped v3 packet shapes.",
+      "usage": "social.friendLifecycle"
+    }
+  ],
+  "hotkeys": []
+}

@@ -1,0 +1,97 @@
+{
+  "id": "premade-chat",
+  "name": "Chat Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Chat module.",
+  "entry": "plugin.js",
+  "icon": "messages",
+  "category": "social",
+  "permissions": [
+    "ui.panel",
+    "ui.status",
+    "console.commands",
+    "events.room",
+    "engine.snapshot",
+    "events.chat",
+    "chat.send",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Chat Panel",
+      "enabledByDefault": true,
+      "summary": "Compact chat send and chat history.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Room chat",
+          "level": 3
+        },
+        {
+          "type": "section",
+          "title": "Send",
+          "children": [
+            {
+              "type": "textInput",
+              "id": "chatMessage",
+              "label": "Message",
+              "placeholder": "room message",
+              "action": "chat.set.chatMessage"
+            },
+            {
+              "type": "textInput",
+              "id": "whisperTarget",
+              "label": "Whisper To",
+              "placeholder": "username",
+              "action": "chat.set.whisperTarget"
+            },
+            {
+              "type": "button",
+              "label": "Say",
+              "action": "chat.say",
+              "variant": "primary"
+            },
+            {
+              "type": "button",
+              "label": "Shout",
+              "action": "chat.shout",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Whisper",
+              "action": "chat.whisper",
+              "variant": "default"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Chat Status",
+      "enabledByDefault": false,
+      "summary": "Chat availability and recent line count."
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Chat Commands",
+      "enabledByDefault": true,
+      "summary": "Send chat through the live Director room chat field."
+    }
+  ],
+  "commands": [
+    {
+      "name": "chat.sendMessage",
+      "label": "Send Chat Message",
+      "description": "Send a chat line through a mapped Shockless input/action path.",
+      "usage": "chat.sendMessage"
+    }
+  ],
+  "hotkeys": []
+}

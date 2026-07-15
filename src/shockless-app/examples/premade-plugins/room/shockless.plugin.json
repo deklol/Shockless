@@ -1,0 +1,80 @@
+{
+  "id": "premade-room",
+  "name": "Room Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Room module.",
+  "entry": "plugin.js",
+  "icon": "map",
+  "category": "room",
+  "permissions": [
+    "ui.panel",
+    "ui.overlay",
+    "ui.status",
+    "events.room",
+    "engine.snapshot",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Room Panel",
+      "enabledByDefault": true,
+      "summary": "Room facts, entry controls, walk/stage click, users, heightmap, item counts, and chat tail."
+    },
+    {
+      "id": "overlay",
+      "kind": "overlay",
+      "label": "Room Overlay",
+      "enabledByDefault": true,
+      "summary": "Optional room labels and hover hints above the game."
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Room Status",
+      "enabledByDefault": true,
+      "summary": "Current room summary in the bottom strip."
+    }
+  ],
+  "commands": [
+    {
+      "name": "room.readSummary",
+      "label": "Read Room Summary",
+      "description": "Read current room mode, id, owner, users, and object counts from Shockless dev state.",
+      "usage": "room.readSummary"
+    },
+    {
+      "name": "room.showHotelView",
+      "label": "Show Hotel View",
+      "description": "Leave the current room through Shockless helpers and return to hotel view.",
+      "usage": "room.showHotelView"
+    },
+    {
+      "name": "room.enterPrivate",
+      "label": "Enter Private Room",
+      "description": "Enter a private flat through the generated Navigator Component prepare-room-entry path.",
+      "usage": "room.enterPrivate"
+    },
+    {
+      "name": "room.enterPublic",
+      "label": "Enter Public Room",
+      "description": "Enter a public room through the generated Navigator public node prepare-room-entry path.",
+      "usage": "room.enterPublic"
+    },
+    {
+      "name": "room.openNavigator",
+      "label": "Open Navigator",
+      "description": "Open the Navigator window through Shockless helpers.",
+      "usage": "room.openNavigator"
+    },
+    {
+      "name": "room.stageClick",
+      "label": "Walk / Stage Click",
+      "description": "Click the live Shockless stage through Director pointer events for mapped walk/click tests.",
+      "usage": "room.stageClick"
+    }
+  ],
+  "hotkeys": []
+}

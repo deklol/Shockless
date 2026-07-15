@@ -1,0 +1,198 @@
+/* Volter (Goldfish): the Habbo Director embedded font members "V"/"VB"
+   rendered as webfonts so canvas/Pixi text matches the original. */
+@font-face {
+  font-family: "Volter Goldfish";
+  src: url("/fonts/volter/volter-goldfish.woff2") format("woff2");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Volter Goldfish";
+  src: url("/fonts/volter/volter-bold-goldfish.woff2") format("woff2");
+  font-weight: 700;
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: #ddd;
+  font: 12px/1.5 Consolas, monospace;
+}
+
+#page {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  min-width: 1092px;
+  box-sizing: border-box;
+}
+
+#quick-login-panel {
+  display: none;
+  flex: 0 0 116px;
+  border: 1px solid #303030;
+  background: #101010;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+body[data-dev-quick-login="1"] #quick-login-panel {
+  display: block;
+}
+
+#quick-login-panel h1 {
+  margin: 0 0 6px;
+  font: 700 11px/1.2 Consolas, monospace;
+  color: #fff;
+}
+
+#quick-login-panel input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 5px;
+  border: 1px solid #444;
+  background: #050505;
+  color: #eee;
+  font: 11px Consolas, monospace;
+  padding: 4px;
+}
+
+#quick-login-panel button {
+  width: 100%;
+  border: 1px solid #686868;
+  background: #d8d8d8;
+  color: #000;
+  font: 700 11px Consolas, monospace;
+  padding: 4px 2px;
+  cursor: pointer;
+}
+
+#quick-login-panel button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+#quick-login-message {
+  margin-top: 5px;
+  min-height: 24px;
+  color: #8fd;
+  word-break: break-word;
+}
+
+#stage-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+#stage-wrap canvas {
+  display: block;
+  box-shadow: 0 0 24px #000;
+}
+
+#status {
+  padding: 4px 16px;
+  color: #8fd;
+}
+
+/* Branded boot splash: full-viewport, perfectly centered, holds ~2s then fades.
+   Independent of #status, which main.ts repurposes for the live frame readout. */
+#boot-splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #000;
+  color: #fff;
+  font-family: "Volter Goldfish", Consolas, monospace;
+  font-size: 9px;
+  z-index: 99999;
+  animation: boot-splash-fade 2.3s ease forwards;
+}
+
+/* Margin, not literal spaces, so gaps survive HTML whitespace minification. */
+#boot-splash b {
+  font-weight: 700;
+  margin-left: 0.45em;
+}
+
+@keyframes boot-splash-fade {
+  0%,
+  87% {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+#log {
+  padding: 0 16px 16px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+#log .put {
+  color: #cca;
+}
+
+#log .error {
+  color: #f88;
+}
+
+#log .info {
+  color: #8ac;
+}
+
+body[data-standalone="1"] {
+  overflow: hidden;
+  background: #000;
+}
+
+body[data-standalone="1"] #page {
+  width: 100vw;
+  height: 100vh;
+  min-width: 0;
+  padding: 0;
+  gap: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+body[data-standalone="1"] #quick-login-panel,
+body[data-standalone="1"] #status,
+body[data-standalone="1"] #log {
+  display: none;
+}
+
+body[data-standalone="1"] #stage-wrap {
+  flex: 0 0 auto;
+  width: 960px;
+  height: 540px;
+}
+
+body[data-standalone="1"] #stage-wrap canvas {
+  box-shadow: none;
+}
+
+body[data-standalone="1"][data-resizable-presentation="1"] #page {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+body[data-standalone="1"][data-resizable-presentation="1"] #stage-wrap {
+  flex: 1 1 auto;
+  width: 100vw;
+  height: 100vh;
+  min-width: 960px;
+  min-height: 540px;
+  justify-content: flex-start;
+  align-items: flex-start;
+}

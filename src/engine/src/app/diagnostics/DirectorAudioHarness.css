@@ -1,0 +1,217 @@
+.director-audio-harness {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100001;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(760px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  border: 1px solid #525252;
+  background: #0b0b0b;
+  color: #e8e8e8;
+  box-shadow: 0 10px 32px #000;
+  font: 12px/1.35 Consolas, monospace;
+}
+
+.director-audio-harness * {
+  box-sizing: border-box;
+}
+
+.director-audio-harness__header,
+.director-audio-harness footer {
+  border-bottom: 1px solid #333;
+  background: #171717;
+  padding: 9px 12px;
+}
+
+.director-audio-harness__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.director-audio-harness__header strong {
+  display: block;
+  color: #f2c22d;
+  font-size: 14px;
+}
+
+.director-audio-harness__header span {
+  display: block;
+  margin-top: 2px;
+  color: #999;
+  font-size: 11px;
+}
+
+.director-audio-harness__header button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 16px;
+}
+
+.director-audio-harness__body {
+  overflow: auto;
+  min-height: 0;
+  padding: 10px;
+}
+
+.director-audio-harness section {
+  margin: 0 0 10px;
+  border: 1px solid #303030;
+  background: #111;
+  padding: 10px;
+}
+
+.director-audio-harness h2 {
+  margin: 0 0 8px;
+  color: #f2c22d;
+  font-size: 12px;
+}
+
+.director-audio-harness p {
+  margin: 0 0 8px;
+  color: #aaa;
+}
+
+.director-audio-harness label {
+  display: grid;
+  gap: 4px;
+  color: #aaa;
+  min-width: 0;
+}
+
+.director-audio-harness input,
+.director-audio-harness select,
+.director-audio-harness button {
+  min-height: 28px;
+  border: 1px solid #4b4b4b;
+  border-radius: 0;
+  background: #191919;
+  color: #eee;
+  font: inherit;
+}
+
+.director-audio-harness input,
+.director-audio-harness select {
+  width: 100%;
+  padding: 4px 6px;
+}
+
+.director-audio-harness button {
+  padding: 4px 9px;
+  cursor: pointer;
+}
+
+.director-audio-harness button:hover,
+.director-audio-harness button:focus-visible {
+  border-color: #d5a719;
+  color: #ffd85a;
+  outline: none;
+}
+
+.director-audio-harness__grid {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.director-audio-harness__grid--six {
+  grid-template-columns: repeat(6, minmax(78px, 1fr));
+}
+
+.director-audio-harness__grid--five {
+  grid-template-columns: repeat(5, minmax(90px, 1fr));
+  align-items: end;
+}
+
+.director-audio-harness__grid--two {
+  grid-template-columns: minmax(0, 1fr) 90px;
+}
+
+.director-audio-harness__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.director-audio-harness__check {
+  display: inline-flex !important;
+  grid-template-columns: none;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px !important;
+  min-height: 28px;
+  padding: 0 4px;
+}
+
+.director-audio-harness__check input {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+}
+
+.director-audio-harness__section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.director-audio-harness__section-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.director-audio-harness__section-heading h2 {
+  margin: 0;
+}
+
+.director-audio-harness__table-wrap {
+  overflow: auto;
+  margin-top: 8px;
+  border: 1px solid #292929;
+}
+
+.director-audio-harness table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 11px;
+}
+
+.director-audio-harness th,
+.director-audio-harness td {
+  overflow: hidden;
+  border-bottom: 1px solid #242424;
+  padding: 4px 6px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.director-audio-harness th:nth-child(3),
+.director-audio-harness td:nth-child(3) {
+  width: 32%;
+}
+
+.director-audio-harness footer {
+  border-top: 1px solid #333;
+  border-bottom: 0;
+  color: #8fd79a;
+}
+
+.director-audio-harness footer[data-level="error"] {
+  color: #ff8989;
+}
+
+@media (max-width: 760px) {
+  .director-audio-harness__grid--six,
+  .director-audio-harness__grid--five {
+    grid-template-columns: repeat(2, minmax(90px, 1fr));
+  }
+}

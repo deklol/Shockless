@@ -1,0 +1,72 @@
+{
+  "id": "premade-hide-list",
+  "name": "Hide List Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Hide List module.",
+  "entry": "plugin.js",
+  "icon": "user",
+  "category": "user",
+  "permissions": [
+    "ui.panel",
+    "engine.control",
+    "engine.snapshot",
+    "events.room",
+    "events.chat",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Hide List Panel",
+      "enabledByDefault": true,
+      "summary": "Add, remove, and clear locally hidden users.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Hide list",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Hide usernames or account ids locally while the plugin is active."
+        },
+        {
+          "type": "section",
+          "title": "Entry",
+          "children": [
+            {
+              "type": "textInput",
+              "id": "target",
+              "label": "Username or ID",
+              "placeholder": "Habbo name or account id",
+              "action": "hideList.target"
+            },
+            {
+              "type": "textInput",
+              "id": "reason",
+              "label": "Reason",
+              "placeholder": "optional note",
+              "action": "hideList.reason"
+            },
+            {
+              "type": "button",
+              "label": "Add",
+              "action": "hideList.add",
+              "variant": "primary"
+            },
+            {
+              "type": "button",
+              "label": "Clear",
+              "action": "hideList.clear",
+              "variant": "danger"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "commands": [],
+  "hotkeys": []
+}

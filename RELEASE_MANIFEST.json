@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-07-15T00:25:42.600Z",
+  "version": "0.1.16",
+  "ok": true,
+  "releaseRoot": "release",
+  "files": 934,
+  "findings": [],
+  "paths": {
+    "portable": "portable/Shockless/Shockless.exe",
+    "appSource": "src/shockless-app",
+    "engineSource": "src/engine",
+    "docs": "docs"
+  }
+}

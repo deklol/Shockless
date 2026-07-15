@@ -1,0 +1,30 @@
+{
+  "name": "shockless-engine",
+  "version": "0.1.0",
+  "private": false,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "lingo:generate": "tsx tools/lingo-generate.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:compat": "tsc6 --noEmit",
+    "test": "vitest run",
+    "test:audio-pcm": "node scripts/verify-director-audio-pcm.mjs",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "jpeg-js": "^0.4.4",
+    "pixi.js": "^8.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "playwright": "^1.60.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "tsx": "^4.19.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  }
+}

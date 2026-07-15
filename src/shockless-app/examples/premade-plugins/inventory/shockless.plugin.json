@@ -1,0 +1,44 @@
+{
+  "id": "premade-inventory",
+  "name": "Inventory Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Inventory module.",
+  "entry": "plugin.js",
+  "icon": "package",
+  "category": "inventory",
+  "permissions": [
+    "ui.panel",
+    "console.commands",
+    "events.room",
+    "engine.snapshot",
+    "events.packet",
+    "packet.read",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Inventory Panel",
+      "enabledByDefault": true,
+      "summary": "Inventory request and item detail surface."
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Inventory Commands",
+      "enabledByDefault": false,
+      "summary": "Request and inspect inventory once mapped."
+    }
+  ],
+  "commands": [
+    {
+      "name": "inventory.requestHand",
+      "label": "Request Hand Inventory",
+      "description": "Open/read the hand inventory through the Room_bar hand icon and Room_container.pItemList.",
+      "usage": "inventory.requestHand"
+    }
+  ],
+  "hotkeys": []
+}

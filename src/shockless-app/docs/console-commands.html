@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Console Commands - Shockless</title>
+  <style>
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-goldfish.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Volter Goldfish";
+      src: url("../src/shockless-app/public/fonts/volter/volter-bold-goldfish.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    :root {
+      color-scheme: dark;
+      --font: "Volter Goldfish", "Segoe UI", Tahoma, sans-serif;
+      --font-read: "Segoe UI", Tahoma, Arial, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+      --bg: #050505;
+      --panel: #101010;
+      --panel-2: #171717;
+      --panel-3: #202020;
+      --line: #2b2b2b;
+      --text: #dedede;
+      --muted: #9a9a9a;
+      --dim: #656565;
+      --gold: #e3b23a;
+      --gold-dark: #9c7418;
+      --shadow: #000;
+      --bevel: inset 2px 2px 0 #2d2d2d, inset -2px -2px 0 #000;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font: 14px/1.55 var(--font-read);
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 12px),
+        linear-gradient(180deg, #0b0b0b 0%, #030303 100%);
+    }
+    a { color: inherit; }
+    code, pre { font-family: var(--mono); }
+    pre {
+      overflow: auto;
+      max-width: 100%;
+      padding: 14px;
+      background: #070707;
+      border: 1px solid var(--line);
+      box-shadow: var(--bevel);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+      display: block;
+      overflow-x: auto;
+      white-space: normal;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    th { background: var(--panel-2); color: var(--gold); text-align: left; }
+    .shell {
+      display: grid;
+      grid-template-columns: 276px minmax(0, 1120px);
+      gap: 14px;
+      min-height: 100vh;
+      justify-content: center;
+      padding: 12px;
+      max-width: 100%;
+    }
+    .sidebar {
+      min-width: 0;
+      position: sticky;
+      top: 12px;
+      height: calc(100vh - 24px);
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel);
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 8px;
+      margin-bottom: 12px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      box-shadow: var(--bevel);
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #f1c550, var(--gold-dark));
+      color: #111;
+      font: 700 20px/1 var(--font);
+      box-shadow: 0 0 0 2px #000, inset 2px 2px 0 rgba(255,255,255,.24), inset -2px -2px 0 #5b4108;
+    }
+    .brand strong {
+      display: block;
+      font: 700 15px/1 var(--font);
+      text-shadow: 2px 2px 0 #000;
+    }
+    .brand small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font: 9px/1 var(--font);
+    }
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+    .nav-link {
+      display: block;
+      padding: 10px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      border-left: 3px solid transparent;
+      box-shadow: var(--bevel);
+    }
+    .nav-link:hover,
+    .nav-link.active {
+      border-left-color: var(--gold);
+      background: #1d1d1d;
+    }
+    .nav-link span {
+      display: block;
+      color: #f1f1f1;
+      font: 700 10px/1.2 var(--font);
+      text-shadow: 2px 2px 0 #000;
+    }
+    .nav-link small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .content {
+      min-width: 0;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+    .hero-window,
+    .doc-window {
+      min-width: 0;
+      max-width: 100%;
+      background: var(--panel);
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+    }
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #171717;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--gold);
+      font: 700 9px/1 var(--font);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    h1, h2, h3 {
+      color: #f5f5f5;
+      line-height: 1.2;
+      text-shadow: 2px 2px 0 #000;
+    }
+    h1 {
+      margin: 0;
+      font: 700 24px/1.1 var(--font);
+    }
+    h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 21px;
+    }
+    h3 { margin-top: 22px; }
+    .status-pill,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      color: var(--text);
+      text-decoration: none;
+      background: #1a1a1a;
+      box-shadow: 0 0 0 2px #000, var(--bevel);
+      font: 700 10px/1 var(--font);
+    }
+    .button.primary {
+      color: #111;
+      background: linear-gradient(180deg, #efc24b, #c79422);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(260px, .6fr);
+      gap: 14px;
+      padding: 18px;
+    }
+    .lead {
+      margin: 0;
+      max-width: 760px;
+      color: var(--text);
+      font-size: 16px;
+    }
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .path-card {
+      padding: 14px;
+      background: #090909;
+      border: 1px solid var(--line);
+      box-shadow: var(--bevel);
+    }
+    .path-card .label,
+    .path-card .hint {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .path-card code {
+      display: block;
+      margin: 10px 0;
+      color: var(--gold);
+      word-break: break-word;
+    }
+    .section-heading {
+      padding: 14px 16px 0;
+    }
+    .section-heading h2 {
+      margin-top: 0;
+    }
+    .doc-body {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      padding: 18px;
+    }
+    .doc-body a {
+      color: var(--gold);
+    }
+    .doc-body code {
+      color: #f0c85a;
+      background: #080808;
+      border: 1px solid #242424;
+      padding: 1px 4px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .doc-body pre code {
+      display: block;
+      padding: 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    .doc-body p,
+    .doc-body li {
+      color: var(--text);
+    }
+    .doc-body ul,
+    .doc-body ol {
+      margin: 10px 0 16px 22px;
+      padding: 0;
+    }
+    .doc-body li + li {
+      margin-top: 6px;
+    }
+    .doc-body blockquote {
+      margin: 16px 0;
+      padding: 10px 14px;
+      border-left: 3px solid var(--gold-dark);
+      background: #0b0b0b;
+      color: var(--muted);
+    }
+    .doc-body img {
+      max-width: 100%;
+      height: auto;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      padding: 0 18px 18px;
+    }
+    .doc-card {
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px;
+      color: var(--text);
+      text-decoration: none;
+      background: #151515;
+      border-left: 3px solid var(--gold-dark);
+      box-shadow: var(--bevel);
+    }
+    .doc-card:hover {
+      border-left-color: var(--gold);
+      background: #1d1d1d;
+    }
+    .doc-card span {
+      color: var(--gold);
+      font: 700 10px/1.1 var(--font);
+    }
+    .doc-card strong {
+      color: #efefef;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="index.html" aria-label="Shockless documentation home">
+        <span class="brand-mark">H</span>
+        <span><strong>Shockless</strong><small>Public docs</small></span>
+      </a>
+      <nav class="nav" aria-label="Documentation sections">
+        <a class="nav-link" href="index.html"><span>Home</span><small>Offline docs start page</small></a>
+<a class="nav-link" href="getting-started.html"><span>Getting Started</span><small>Run the portable app and import a profile</small></a>
+<a class="nav-link" href="building-from-source.html"><span>Build From Source</span><small>Install dependencies and package the app</small></a>
+<a class="nav-link" href="plugin-authoring.html"><span>Plugin Authoring</span><small>Create and install user plugins</small></a>
+<a class="nav-link" href="plugin-api.html"><span>Plugin API</span><small>Complete plugin API reference</small></a>
+<a class="nav-link active" href="console-commands.html"><span>Console Commands</span><small>Backtick console command usage</small></a>
+<a class="nav-link" href="multi-client.html"><span>Multi-Client</span><small>Visible and hidden session control</small></a>
+<a class="nav-link" href="engine-overview.html"><span>Engine Overview</span><small>Shockless runtime overview</small></a>
+<a class="nav-link" href="release-layout.html"><span>Release Layout</span><small>Files included in the public release</small></a>
+      </nav>
+    </aside>
+    <main class="content">
+      <section class="doc-window">
+        <div class="titlebar">
+          <div>
+            <p class="eyebrow">Shockless Documentation</p>
+            <h1>Console Commands</h1>
+          </div>
+          <a class="status-pill" href="index.html">Index</a>
+        </div>
+        <div class="doc-body"><h2>Backtick Console Command Reference</h2>
+<p>The backtick console opens with `<code> </code> `` unless focus is already inside a text</p>
+<p>input. Commands are parsed by the shared command bus first, then renderer-only</p>
+<p>game commands run when direct webview/runtime access is required.</p>
+<h3>Target Prefixes</h3>
+<p>Prefix any routed command with a target:</p>
+<ul>
+<li><code>@1</code>, <code>@2</code>, <code>@3</code>: route to one client id.</li>
+<li><code>@main</code>: route to the configured main/summoner client.</li>
+<li><code>@all</code>: route to all known clients.</li>
+<li><code>@visible</code>: route to visible clients.</li>
+<li><code>@headless</code>: route to hidden/headless clients.</li>
+<li><code>@Label</code>: route to a client label.</li>
+</ul>
+<p>Examples:</p>
+<pre><code>
+@2 say hello from client two
+@all room
+@headless fps
+@headless gpu
+@main mimic status
+</code></pre>
+<h3>Session Commands</h3>
+<p>Implemented in the main-process command bus:</p>
+<ul>
+<li><code>help</code> or <code>?</code>: show short in-console help.</li>
+<li><code>list</code>, <code>clients</code>, <code>sessions</code>: list client id, label, status, mode, user,</li>
+</ul>
+<p>  and profile.</p>
+<ul>
+<li><code>select &lt;id|label&gt;</code>: select a client.</li>
+<li><code>client &lt;id|label&gt;</code>: alias for <code>select</code>.</li>
+<li><code>rename &lt;id&gt; &lt;label&gt;</code>: rename a session label.</li>
+<li><code>main &lt;id|label&gt;</code>: set the main/summoner client.</li>
+<li><code>summoner &lt;id|label&gt;</code> or <code>summoner set &lt;id|label&gt;</code>: set the</li>
+</ul>
+<p>  main/summoner client.</p>
+<ul>
+<li><code>newclient [--label &lt;name&gt;]</code>: start a new visible client from the selected</li>
+</ul>
+<p>  ready profile, select it, and leave it at the game login flow for manual</p>
+<p>  login. Alias: <code>addclient</code>.</p>
+<ul>
+<li><code>enterroom &lt;flat-id&gt;</code>: ask targeted clients to enter a private room through</li>
+</ul>
+<p>  the Shockless <code>enterPrivateRoom</code> helper. Aliases: <code>private</code>, <code>goto</code>, <code>flat</code>.</p>
+<ul>
+<li><code>start</code>: start the selected client through the same profile/relay/static</li>
+</ul>
+<p>  server path as the UI Start button. Alias: <code>launch</code>.</p>
+<ul>
+<li><code>@2 start</code>, <code>@all start</code>: start a specific client or all known clients.</li>
+<li><code>close &lt;id|label&gt;</code>: stop one client.</li>
+<li><code>stop &lt;id|label&gt;</code>: alias for <code>close</code>.</li>
+<li><code>close all [--keep-main]</code>: stop all clients, optionally preserving main.</li>
+<li><code>load &lt;file&gt; &lt;count&gt; [--headless] [--summon] [--concurrency &lt;n&gt;]</code>: start</li>
+</ul>
+<p>  clients from the local two-line account file shape. Headless load defaults to</p>
+<p>  bounded concurrency so multiple accounts do not start one-by-one or all spike</p>
+<p>  the machine at once.</p>
+<ul>
+<li><code>login &lt;email:password&gt; [--headless] [--label &lt;name&gt;]</code>: start one client</li>
+</ul>
+<p>  from a credential pair kept in memory only.</p>
+<ul>
+<li><code>accounts import &lt;file&gt; --key-env &lt;ENV_NAME&gt;</code>: import the local two-line</li>
+</ul>
+<p>  account file into the encrypted app-data account store. The encryption key is</p>
+<p>  read from the named environment variable so the key is not typed into console</p>
+<p>  history.</p>
+<ul>
+<li><code>accounts list --key-env &lt;ENV_NAME&gt;</code>: decrypt the account store and list</li>
+</ul>
+<p>  labels only, never emails or passwords.</p>
+<ul>
+<li><code>accounts load &lt;count&gt; --key-env &lt;ENV_NAME&gt; [--headless] [--summon] [--concurrency &lt;n&gt;]</code>:</li>
+</ul>
+<p>  load clients from the encrypted app-data account store through the same</p>
+<p>  runtime path as <code>load</code>.</p>
+<ul>
+<li><code>load-store &lt;count&gt; --key-env &lt;ENV_NAME&gt; [--headless] [--summon] [--concurrency &lt;n&gt;]</code>:</li>
+</ul>
+<p>  short form for <code>accounts load</code>.</p>
+<ul>
+<li><code>accounts clear</code>: remove the encrypted app-data account store.</li>
+</ul>
+<p>The account file shape is:</p>
+<pre><code>
+Habbo name
+loginemail:password
+</code></pre>
+<p>Credentials are not hardcoded into source or command docs. <code>login</code> echo output</p>
+<p>is redacted; <code>load</code> and encrypted account commands print labels/status only.</p>
+<p>The top session strip and Multi Account session list both select the active</p>
+<p>client. Running visible sessions mount their GameHost webviews automatically,</p>
+<p>then only the selected client is shown and interactive. Switching away hides</p>
+<p>the inactive stage surface instead of unmounting it, so switching back keeps</p>
+<p>the same logged-in game runtime. The <code>+</code> button in the top session strip runs</p>
+<p><code>newclient</code>, creating a switchable manual-login visible client when a ready</p>
+<p>profile is selected. The Multi Account list also has per-session close buttons</p>
+<p>for additional clients, backed by <code>close &lt;id&gt;</code>.</p>
+<h3>Quick Start: Two Users</h3>
+<p>Use this when you want the visible main client plus two extra headless users.</p>
+<p>If you are using the local test account file directly:</p>
+<pre><code>
+load &quot;C:\Shockless\accounts.txt&quot; 2 --headless --concurrency 2
+wait 8000
+list
+</code></pre>
+<p>If you want to use the encrypted app-data store instead, set an environment</p>
+<p>variable before launching Shockless, then run:</p>
+<pre><code>
+accounts import &quot;C:\Shockless\accounts.txt&quot; --key-env HABBPY_V4_ACCOUNT_STORE_KEY
+accounts list --key-env HABBPY_V4_ACCOUNT_STORE_KEY
+accounts load 2 --headless --key-env HABBPY_V4_ACCOUNT_STORE_KEY --concurrency 2
+wait 8000
+list
+</code></pre>
+<p>After loading two accounts, <code>list</code> should show <code>client2</code> and <code>client3</code> as</p>
+<p><code>headless,running</code>. You can target them by id:</p>
+<pre><code>
+@2 say hello from client two
+@3 requests
+@2 message dek &quot;sorry this is just a test message&quot;
+@3 adduser dek
+</code></pre>
+<p>To switch the selected client for plugin panels:</p>
+<pre><code>
+select 2
+select 3
+select 1
+</code></pre>
+<p>To inspect packet logs:</p>
+<pre><code>
+packets all
+packets client 2
+packets client 3
+packets selected
+</code></pre>
+<h3>Summon</h3>
+<p>Summon is implemented for live sessions through source-backed routes:</p>
+<ul>
+<li>Visible private-room entry: if a main private room id is known and the target</li>
+</ul>
+<p>  is a visible client, Shockless returns a renderer action and the renderer asks</p>
+<p>  that visible Shockless webview to enter the private room directly. This</p>
+<p>  avoids treating a server-accepted <code>FOLLOW_FRIEND [262]</code> packet as success</p>
+<p>  when Origins later rejects the follow.</p>
+<ul>
+<li>Hidden friend-follow first: if the target hidden client&#39;s parsed friend list</li>
+</ul>
+<p>  contains the main user, Shockless sends the mapped v3 <code>FOLLOW_FRIEND [262]</code></p>
+<p>  packet through that target client&#39;s relay.</p>
+<ul>
+<li>Hidden private-room entry fallback: if a main private room id is known, Shockless</li>
+</ul>
+<p>  asks the target hidden Shockless runtime to enter that private room through</p>
+<p>  <code>Navigator Component.prepareRoomEntry(flatId, #private)</code>.</p>
+<ul>
+<li>v3 visit fallback: if a hidden target reaches room metadata but does not</li>
+</ul>
+<p>  become room-ready, Shockless sends the v3 private-room packet sequence through</p>
+<p>  that target client&#39;s relay:</p>
+<p>  <code>GETFLATINFO [21]</code>, <code>GETINTERST [182]</code>, <code>ROOM_DIRECTORY [2]</code>,</p>
+<p>  <code>TRYFLAT [57]</code>, and <code>GOTOFLAT [59]</code>.</p>
+<p>Commands:</p>
+<ul>
+<li><code>summon &lt;id|label|all|headless&gt;</code>: summon matching clients to the configured</li>
+</ul>
+<p>  main/summoner client.</p>
+<ul>
+<li><code>summon &lt;id|label&gt; --room</code>: skip friend-follow and use direct private-room</li>
+</ul>
+<p>  entry when a main private room id is available.</p>
+<ul>
+<li><code>summon &lt;id|label&gt; --main-name &lt;name&gt; --main-room-id &lt;flat-id&gt;</code>: explicit</li>
+</ul>
+<p>  context for scripts or non-renderer automation.</p>
+<ul>
+<li><code>load &lt;file&gt; &lt;count&gt; --headless --summon</code>: summon newly loaded clients to an</li>
+</ul>
+<p>  already configured main room context.</p>
+<ul>
+<li><code>accounts load &lt;count&gt; --headless --summon --key-env &lt;ENV_NAME&gt;</code>: encrypted</li>
+</ul>
+<p>  store version of the same flow.</p>
+<p>If your visible main client is already logged into a private room, the renderer</p>
+<p>adds <code>--main-name</code>, <code>--main-room-id</code>, and <code>--main-room-name</code> automatically.</p>
+<p>For account load and login commands it also adds every known active visible</p>
+<p>username as <code>--active-name</code>, so the loader can skip already-active visible</p>
+<p>accounts instead of starting a duplicate session. Account labels with</p>
+<p>parenthetical notes, for example <code>dek (main test account)</code>, are matched</p>
+<p>against the live username <code>dek</code> generically.</p>
+<p>Visible target clients do not have hidden-runtime webContents. For direct-room</p>
+<p>summon, the command bus returns a renderer action and the renderer runs the</p>
+<p>private-room entry helper against that visible client&#39;s mounted webview without</p>
+<p>switching the selected stage. For summon this is fire-and-return after routing</p>
+<p>the room-entry helper, so the console does not wait for a full room-ready state.</p>
+<p>Hidden clients still use the hidden runtime helper.</p>
+<p>If the main account is one of the accounts you are loading, use a two-step</p>
+<p>flow because the main does not exist until the load completes:</p>
+<pre><code>
+accounts import &quot;C:\Shockless\accounts.txt&quot; --key-env HABBPY_V4_ACCOUNT_STORE_KEY
+accounts load 3 --headless --key-env HABBPY_V4_ACCOUNT_STORE_KEY --concurrency 2
+wait 20000
+main &quot;dek (main test account)&quot;
+summon shockless
+summon shockless1 --room
+list
+</code></pre>
+<p>To close the extra users:</p>
+<pre><code>
+close 2
+close 3
+</code></pre>
+<p>or:</p>
+<pre><code>
+close all --keep-main
+</code></pre>
+<h3>Multi-Client Mimic</h3>
+<p>Implemented through decoded relay logs plus scoped relay control packets:</p>
+<ul>
+<li><code>mimic status</code>: show enabled state, source client, target clients, counters,</li>
+</ul>
+<p>  and last error.</p>
+<ul>
+<li><code>mimic on [--source &lt;id&gt;]</code>: enable mimic from the main client or explicit</li>
+</ul>
+<p>  source.</p>
+<ul>
+<li><code>@2 mimic on</code>: enable mimic using client 2 as the source.</li>
+<li><code>mimic source &lt;id&gt;</code>: change source client and start from new relay-log tail.</li>
+<li><code>mimic set movement on|off</code>: toggle movement forwarding.</li>
+<li><code>mimic set speech on|off</code>: toggle chat/shout/whisper/typing forwarding.</li>
+<li><code>mimic set actions on|off</code>: toggle wave/dance/carry/sign/look forwarding.</li>
+<li><code>mimic set rooms on|off</code>: toggle private-room join forwarding.</li>
+<li><code>mimic off</code>: disable mimic.</li>
+</ul>
+<p>Mimic forwards only whitelisted outgoing client packet families such as avatar</p>
+<p>movement, Origins avatar movement (<code>ORIGINS_MOVE [1269]</code>), chat/shout/whisper,</p>
+<p>dance, wave, carry, sign, look, figure/motto-style updates, swim, and typing</p>
+<p>state. It refuses sensitive login, key exchange, and unique-id packets even if</p>
+<p>an old v3 fallback header overlaps.</p>
+<h3>Packet Log Commands</h3>
+<p>Implemented in the renderer console and Packet Log module:</p>
+<ul>
+<li><code>packets</code>: show current packet filter status.</li>
+<li><code>packets all</code> or <code>packets clients</code>: show packet rows from all clients.</li>
+<li><code>packets selected</code>: filter to the selected client.</li>
+<li><code>packets client &lt;id&gt;</code>: filter to one client id.</li>
+<li><code>packets c &lt;id&gt;</code>: short form for <code>packets client &lt;id&gt;</code>.</li>
+<li><code>packets &lt;text&gt;</code>: text-search packet rows without truncating body output.</li>
+<li><code>filter &lt;...&gt;</code>: alias for <code>packets &lt;...&gt;</code>.</li>
+</ul>
+<p>Packet rows include client ids/labels so all-client views remain</p>
+<p>distinguishable.</p>
+<p>Validated packet injection uses the same builder and relay path as the</p>
+<p>Injection plugin:</p>
+<ul>
+<li><code>inject server &lt;packet&gt;</code>: send a client-to-server Shockwave packet.</li>
+<li><code>inject client &lt;packet&gt;</code>: deliver a synthetic server-to-client Shockwave</li>
+</ul>
+<p>  packet to the selected client runtime.</p>
+<ul>
+<li><code>sendpacket ...</code> and <code>rawpacket ...</code>: aliases for <code>inject</code>.</li>
+<li>Prefix the command with <code>@&lt;client-id&gt;</code> or <code>@all</code> to select its target</li>
+</ul>
+<p>  sessions. The packet expression is preserved in full, including whitespace,</p>
+<p>  byte escapes, and line breaks.</p>
+<p>Examples:</p>
+<pre><code>
+inject server {h:94}
+@2 inject client {h:48}{s:&quot;example&quot;}
+@all sendpacket server @^
+</code></pre>
+<p>Injection is validated before relay delivery. Unknown numeric headers remain</p>
+<p>usable, while malformed packets and sensitive authentication/key headers are</p>
+<p>refused.</p>
+<h3>Room And Runtime Commands</h3>
+<p>Renderer/runtime-backed commands:</p>
+<ul>
+<li><code>room</code>: print selected room facts from runtime and packet state.</li>
+<li><code>user</code>: print current user/session facts.</li>
+<li><code>rooms &lt;query&gt;</code>: search room/navigation data where available.</li>
+<li><code>hotelView</code> or <code>showHotelView</code>: leave the current room and show hotel view.</li>
+<li><code>navigator [view]</code>, <code>nav [view]</code>, or <code>openNavigator [view]</code>: open the</li>
+</ul>
+<p>  Navigator. The default view is <code>nav_pr</code>.</p>
+<ul>
+<li><code>public &lt;name|node|unit|port&gt;</code>: enter a public room from loaded Navigator</li>
+</ul>
+<p>  data. Aliases are <code>enterPublic</code>, <code>enterPublicRoom</code>, and <code>publicRoom</code>.</p>
+<ul>
+<li><code>inventory</code> or <code>hand</code>: open/request the hand inventory.</li>
+<li><code>hideBulletin</code> or <code>hideBulletinBoard</code>: close the current bulletin/window</li>
+</ul>
+<p>  prompt when the source UI exposes a close control.</p>
+<ul>
+<li><code>windowClick &lt;window-id&gt; &lt;element-id&gt;</code>: click a known source window element</li>
+</ul>
+<p>  through the runtime helper. Aliases are <code>clickWindow</code> and</p>
+<p>  <code>clickWindowElement</code>.</p>
+<ul>
+<li><code>zoom 1|2</code>, <code>stageZoom 1|2</code>, or <code>roomZoom 1|2</code>: set the room-stage render</li>
+</ul>
+<p>  scale to 100% or 200%. The bottom toolbar is not scaled by this command.</p>
+<ul>
+<li><code>lookup &lt;name&gt;</code>: show local runtime rows, decoded packet rows, social rows,</li>
+</ul>
+<p>  private-message context, and Origins public API data.</p>
+<ul>
+<li><code>showNames true|false</code>: enable or disable engine-rendered username labels</li>
+</ul>
+<p>  above room avatars. This updates the same persistent app preference used by</p>
+<p>  Settings. Height and label colors are configured in Settings.</p>
+<ul>
+<li><code>hideFurni true|false</code>: hide/show room furniture in the selected visible</li>
+</ul>
+<p>  runtime. <code>showFurni</code> is an alias for <code>hideFurni false</code>.</p>
+<ul>
+<li><code>hideUsers true|false</code>: hide/show room avatars in the selected visible</li>
+</ul>
+<p>  runtime. <code>showUsers</code> is an alias for <code>hideUsers false</code>.</p>
+<ul>
+<li><code>hideUi true|false</code>: hide/show source UI windows in the selected visible</li>
+</ul>
+<p>  runtime. <code>showUi</code> is an alias for <code>hideUi false</code>.</p>
+<ul>
+<li><code>fx &lt;preset&gt;</code> or <code>sceneFilter &lt;preset&gt;</code>: apply a Pixi scene effect to the</li>
+</ul>
+<p>  selected visible runtime. Use <code>fx list</code> to print available presets and</p>
+<p>  <code>fx none</code> to clear the effect. Current presets are <code>greyscale</code>,</p>
+<p>  <code>blackwhite</code>, <code>sepia</code>, <code>negative</code>, <code>technicolor</code>, <code>polaroid</code>,</p>
+<p>  <code>kodachrome</code>, <code>browni</code>, <code>nightvision</code>, <code>vintage</code>, <code>predator</code>, <code>lsd</code>,</p>
+<p>  <code>matrix</code>, <code>noise</code>, <code>scanlines</code>, and <code>crt</code>. Aliases include <code>grayscale</code>,</p>
+<p>  <code>gray</code>, <code>grey</code>, <code>bw</code>, and <code>scanline</code>. <code>fx matrix</code> applies the dedicated</p>
+<p>  Razer-green Matrix grade with the animated CRT-style scanline overlay.</p>
+<ul>
+<li><code>walk &lt;x&gt; &lt;y&gt; [furni-id]</code>: send source-mapped <code>ORIGINS_MOVE [1269]</code></li>
+</ul>
+<p>  through the targeted client&#39;s relay using the live VL64 integer triple.</p>
+<ul>
+<li><code>say &lt;message&gt;</code> or <code>chat &lt;message&gt;</code>: send room chat for the target session</li>
+</ul>
+<p>  where the target has a running hidden runtime; visible fallback uses the</p>
+<p>  renderer path.</p>
+<ul>
+<li><code>input [client-id] &lt;message&gt;</code>: chat alias for headless/hidden clients.</li>
+<li><code>wave</code>: send the v3-equivalent <code>WAVE [94]</code> packet for the target session.</li>
+<li><code>dance [1-4]</code>: send the v3-equivalent <code>DANCE [93]</code> packet.</li>
+<li><code>stopdance</code>: stop dancing through <code>DANCE [93]</code> value <code>0</code>.</li>
+<li><code>hcdance [number]</code>: send the HC dance variant through the same v3-equivalent</li>
+</ul>
+<p>  dance packet path.</p>
+<ul>
+<li><code>carrydrink</code> or <code>carry</code>: send the v3-equivalent <code>CARRYDRINK [80]</code> packet.</li>
+<li><code>fps [limit]</code>: show or update frame-rate limit where supported.</li>
+<li><code>perf</code>: print performance/runtime stats.</li>
+<li><code>gpu</code>: show GPU/runtime capability status. Hidden/headless targets report</li>
+</ul>
+<p>  WebGL availability plus renderer/vendor facts through the main-process</p>
+<p>  command bus; the selected visible client uses the renderer console fallback.</p>
+<p>  Hardware acceleration is enabled by default when Electron starts. Dev Tools</p>
+<p>  can disable it for the next app restart if the user needs a fallback.</p>
+<h3>Social Commands</h3>
+<p>Implemented with scoped v3-equivalent Social relay packets when an account id</p>
+<p>or parsed row is available:</p>
+<ul>
+<li><code>message &lt;user|account-id&gt; &lt;message&gt;</code>: send a private messenger line.</li>
+<li><code>adduser &lt;name&gt;</code>: send a friend request.</li>
+<li><code>requests</code>: refresh/display friend requests.</li>
+<li><code>accept &lt;request-name|account-id&gt;</code>: accept a friend request.</li>
+<li><code>decline &lt;request-name|account-id&gt;</code>: decline a friend request.</li>
+<li><code>follow &lt;friend-name|account-id&gt;</code>: follow a friend.</li>
+<li><code>removefriend &lt;friend-name|account-id&gt;</code>: remove a friend.</li>
+</ul>
+<p>These commands can use target prefixes, for example:</p>
+<pre><code>
+@2 message dek &quot;sorry this is just a test message&quot;
+@3 adduser dek
+@all requests
+</code></pre>
+<h3>Utility Commands</h3>
+<p>Implemented:</p>
+<ul>
+<li><code>clear</code>: clear console output.</li>
+<li><code>wait &lt;ms&gt;</code> or <code>sleep &lt;ms&gt;</code>: pause command-script execution, clamped to</li>
+</ul>
+<p>  120000 ms.</p>
+<ul>
+<li><code>history [count]</code>: show persisted redacted command history. Direct</li>
+</ul>
+<p>  <code>login &lt;email:password&gt;</code> entries are stored as <code>login [credentials] ...</code>.</p>
+<ul>
+<li><code>alias</code>: list aliases.</li>
+<li><code>alias &lt;name&gt; &lt;expansion&gt;</code>: persist a command alias. Aliases expand before</li>
+</ul>
+<p>  normal command parsing, so target prefixes and quoted args still work.</p>
+<ul>
+<li><code>unalias &lt;name&gt;</code>: remove an alias.</li>
+<li><code>bind &lt;key&gt; &lt;command&gt;</code>: persist an app-scoped key binding, for example</li>
+</ul>
+<p>  <code>bind F1 &quot;mimic status&quot;</code> or <code>bind Ctrl+F1 &quot;select 1&quot;</code>.</p>
+<ul>
+<li><code>bindings</code>: list key bindings.</li>
+<li><code>unbind &lt;key&gt;</code>: remove a key binding.</li>
+<li><code>exec &lt;script-file&gt;</code>: read a local UTF-8 script file and execute each</li>
+</ul>
+<p>  non-empty, non-comment line through the same command bus.</p>
+<ul>
+<li><code>exec &lt;script-file&gt; --dry-run</code>: parse the script, simulate aliases inside</li>
+</ul>
+<p>  the script, validate targets, and print the redacted command plan without</p>
+<p>  executing commands or mutating stored aliases/bindings/history.</p>
+<p>Binding rules:</p>
+<ul>
+<li>Bindings do not fire while focus is inside text inputs, selects, textareas,</li>
+</ul>
+<p>  editable content, the console input, or the game webview.</p>
+<ul>
+<li>Backquote is reserved for toggling the console.</li>
+<li><code>close all</code> / <code>stop all</code> cannot be bound unless the bound command includes</li>
+</ul>
+<p>  <code>--force</code>.</p>
+<ul>
+<li>Script execution is capped at 200 executable lines per file.</li>
+<li>Dry-run mode does not persist alias/binding changes from inside the script.</li>
+</ul>
+<h3>Remaining Workflows</h3>
+<p>Not complete yet:</p>
+<ul>
+<li>True protocol-only headless clients: current headless clients use hidden</li>
+</ul>
+<p>  Shockless runtime windows so Director/Pixi/game state still runs correctly.</p>
+<p>  Hidden runtime windows are now non-focusable offscreen windows to avoid</p>
+<p>  Electron <code>show:false</code> timer throttling. Protocol-only clients remain the</p>
+<p>  required scalable path for high-count AFK sessions.</p>
+<ul>
+<li>Native room invite/accept packet choreography is still a research item. The</li>
+</ul>
+<p>  implemented summon route uses friend-follow and direct private-room entry.</p></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

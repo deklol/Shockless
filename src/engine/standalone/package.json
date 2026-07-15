@@ -1,0 +1,91 @@
+{
+  "name": "shockless-engine-standalone",
+  "version": "0.1.0",
+  "description": "Windows-first standalone loader for Shockless Engine",
+  "author": "Shockless Engine contributors",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/main/main.js",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.main.json --noEmit",
+    "typecheck:compat": "tsc6 -p tsconfig.json --noEmit && tsc6 -p tsconfig.main.json --noEmit",
+    "build:engine": "npm --prefix .. run build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "build:profile-compiler": "node scripts/build-profile-compiler.mjs",
+    "compile": "npm run build:engine && npm run build:profile-compiler && npm run typecheck && npm run build:main && npm run build:renderer",
+    "standalone:dev": "npm run compile && electron dist/main/main/main.js",
+    "standalone:dir": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows.ps1 dir",
+    "standalone:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows.ps1 nsis",
+    "standalone:audio-harness": "node scripts/verify-audio-harness.mjs",
+    "profile:import": "tsx src/cli/profile-import.ts",
+    "profile:doctor": "tsx src/cli/profile-doctor.ts",
+    "profile:refresh-sounds": "tsx src/cli/profile-refresh-sounds.ts",
+    "profile:refresh-visuals": "tsx src/cli/profile-refresh-visuals.ts",
+    "profile:refresh-external-bitmaps": "tsx src/cli/profile-refresh-external-bitmaps.ts",
+    "test": "node --import tsx --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "tsx": "^4.19.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "^6.3.5"
+  },
+  "build": {
+    "appId": "local.shockless-engine.standalone",
+    "productName": "Shockless Engine",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/projectorrays",
+        "to": "projectorrays"
+      },
+      {
+        "from": "resources/relay",
+        "to": "relay"
+      },
+      {
+        "from": "resources/extraction",
+        "to": "extraction"
+      },
+      {
+        "from": "node_modules/jpeg-js",
+        "to": "extraction/node_modules/jpeg-js"
+      },
+      {
+        "from": "resources/compiler",
+        "to": "compiler"
+      },
+      {
+        "from": "../dist",
+        "to": "engine/dist"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "ShocklessEngine-Standalone-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "dependencies": {
+    "jpeg-js": "^0.4.4",
+    "shockless-engine": "file:.."
+  }
+}

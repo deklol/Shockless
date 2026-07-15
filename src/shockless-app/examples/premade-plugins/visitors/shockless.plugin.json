@@ -1,0 +1,36 @@
+{
+  "id": "premade-visitors",
+  "name": "Visitors Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Visitors module.",
+  "entry": "plugin.js",
+  "icon": "user",
+  "category": "social",
+  "permissions": [
+    "ui.panel",
+    "ui.status",
+    "events.room",
+    "engine.snapshot",
+    "events.chat",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Visitors Panel",
+      "enabledByDefault": true,
+      "summary": "Compact visitor list with v3 current/seen tracking."
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Visitors Status",
+      "enabledByDefault": true,
+      "summary": "Current and seen visitor counts in the dock."
+    }
+  ],
+  "commands": [],
+  "hotkeys": []
+}

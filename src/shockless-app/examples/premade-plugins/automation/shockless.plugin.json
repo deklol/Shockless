@@ -1,0 +1,94 @@
+{
+  "id": "premade-automation",
+  "name": "Automation Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Automation module.",
+  "entry": "plugin.js",
+  "icon": "bot",
+  "category": "automation",
+  "permissions": [
+    "ui.panel",
+    "ui.status",
+    "console.commands",
+    "events.room",
+    "engine.snapshot",
+    "actions.avatar",
+    "actions.furni",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Automation Panel",
+      "enabledByDefault": false,
+      "summary": "Window cleanup, wall mover, and helper settings.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Automation building blocks",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Small reusable actions for plugin authors: walk to an item, use it, or collect matched room items."
+        },
+        {
+          "type": "section",
+          "title": "Target item",
+          "children": [
+            {
+              "type": "textInput",
+              "id": "targetItem",
+              "label": "Item",
+              "placeholder": "item id, class, or name",
+              "action": "automation.set.targetItem"
+            },
+            {
+              "type": "button",
+              "label": "Walk To Item",
+              "action": "automation.walkToItem",
+              "variant": "primary"
+            },
+            {
+              "type": "button",
+              "label": "Use Item",
+              "action": "automation.useItem",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Pick Up Matches",
+              "action": "automation.pickupItems",
+              "variant": "default"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "kind": "status",
+      "label": "Automation Status",
+      "enabledByDefault": false,
+      "summary": "Compact active automation readout."
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Automation Commands",
+      "enabledByDefault": false,
+      "summary": "Automation start/stop and mode commands."
+    }
+  ],
+  "commands": [
+    {
+      "name": "automation.summary",
+      "label": "Automation Group Summary",
+      "description": "Show comfort automation status and helper coverage.",
+      "usage": "automation.summary"
+    }
+  ],
+  "hotkeys": []
+}

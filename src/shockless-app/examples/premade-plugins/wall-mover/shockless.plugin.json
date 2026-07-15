@@ -1,0 +1,104 @@
+{
+  "id": "premade-wall-mover",
+  "name": "Wall Mover Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Wall Mover module.",
+  "entry": "plugin.js",
+  "icon": "hammer",
+  "category": "automation",
+  "permissions": [
+    "ui.panel",
+    "console.commands",
+    "events.room",
+    "engine.snapshot",
+    "events.packet",
+    "packet.read",
+    "actions.furni",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Wall Mover Panel",
+      "enabledByDefault": false,
+      "summary": "Compact wall item target and move controls.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Wall mover",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Select a parsed wall item from room state, then nudge, flip, or pick it up."
+        },
+        {
+          "type": "section",
+          "title": "Selected wall item",
+          "children": [
+            {
+              "type": "button",
+              "label": "Move Left",
+              "action": "wall.moveLeft",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Move Right",
+              "action": "wall.moveRight",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Move Up",
+              "action": "wall.moveUp",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Move Down",
+              "action": "wall.moveDown",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Flip",
+              "action": "wall.flip",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Pick Up",
+              "action": "wall.pickup",
+              "variant": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commands",
+      "kind": "commands",
+      "label": "Wall Mover Commands",
+      "enabledByDefault": false,
+      "summary": "Nudge, flip, pickup, and step commands."
+    }
+  ],
+  "commands": [
+    {
+      "name": "wallMover.readWallItems",
+      "label": "Read Wall Items",
+      "description": "Read live wall item rows and target fields for the Wall Mover panel.",
+      "usage": "wallMover.readWallItems"
+    },
+    {
+      "name": "wallMover.moveActions",
+      "label": "Wall Move Actions",
+      "description": "Nudge, flip, step, and pickup controls route through scoped v3 wall item packets.",
+      "usage": "wallMover.moveActions"
+    }
+  ],
+  "hotkeys": []
+}

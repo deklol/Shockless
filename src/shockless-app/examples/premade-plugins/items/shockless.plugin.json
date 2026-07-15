@@ -1,0 +1,147 @@
+{
+  "id": "premade-items",
+  "name": "Items Premade Module",
+  "version": "1.0.0",
+  "author": "Shockless",
+  "description": "Readable user-plugin source reference for the built-in Items module.",
+  "entry": "plugin.js",
+  "icon": "sofa",
+  "category": "inventory",
+  "permissions": [
+    "ui.panel",
+    "ui.overlay",
+    "events.room",
+    "engine.snapshot",
+    "events.packet",
+    "packet.read",
+    "actions.furni",
+    "storage"
+  ],
+  "surfaces": [
+    {
+      "id": "panel",
+      "kind": "panel",
+      "label": "Items Panel",
+      "enabledByDefault": true,
+      "summary": "Floor and wall item browser.",
+      "layout": [
+        {
+          "type": "header",
+          "text": "Room item tools",
+          "level": 3
+        },
+        {
+          "type": "text",
+          "text": "Find, use, move, rotate, and pick up floor or wall furniture by selector."
+        },
+        {
+          "type": "section",
+          "title": "Selector",
+          "children": [
+            {
+              "type": "textInput",
+              "id": "itemQuery",
+              "label": "Item",
+              "placeholder": "id, class, name, owner, or text",
+              "action": "items.set.itemQuery"
+            },
+            {
+              "type": "select",
+              "id": "itemKind",
+              "label": "Kind",
+              "defaultValue": "all",
+              "action": "items.set.itemKind",
+              "options": [
+                {
+                  "value": "all",
+                  "label": "All"
+                },
+                {
+                  "value": "floor",
+                  "label": "Floor"
+                },
+                {
+                  "value": "wall",
+                  "label": "Wall"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "section",
+          "title": "Floor movement",
+          "children": [
+            {
+              "type": "numberInput",
+              "id": "moveX",
+              "label": "X",
+              "defaultValue": 0,
+              "action": "items.set.moveX"
+            },
+            {
+              "type": "numberInput",
+              "id": "moveY",
+              "label": "Y",
+              "defaultValue": 0,
+              "action": "items.set.moveY"
+            },
+            {
+              "type": "numberInput",
+              "id": "direction",
+              "label": "Direction",
+              "defaultValue": 0,
+              "action": "items.set.direction"
+            },
+            {
+              "type": "button",
+              "label": "Find",
+              "action": "items.find",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Use",
+              "action": "items.use",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Move",
+              "action": "items.move",
+              "variant": "primary"
+            },
+            {
+              "type": "button",
+              "label": "Rotate",
+              "action": "items.rotate",
+              "variant": "default"
+            },
+            {
+              "type": "button",
+              "label": "Pick Up",
+              "action": "items.pickup",
+              "variant": "default"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "overlay",
+      "kind": "overlay",
+      "label": "Items Item Overlay",
+      "enabledByDefault": false,
+      "summary": "Item hover/selection labels above the game."
+    }
+  ],
+  "commands": [
+    {
+      "name": "items.readRoomObjects",
+      "label": "Read Room Items",
+      "description": "Read live floor/passive/wall room object rows and enrich them with cached Origins furnidata names.",
+      "usage": "items.readRoomObjects"
+    }
+  ],
+  "hotkeys": []
+}
