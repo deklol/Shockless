@@ -113,6 +113,7 @@ interface ImporterWorkspaceProps {
   readonly onSetRealm: (value: OriginsRealmId) => void;
   readonly onSetHotelView: (value: string) => void;
   readonly onSetResizablePresentation: (enabled: boolean) => void;
+  readonly onSetSteamLogin: (enabled: boolean) => void;
   readonly onSetVersionCheckBuild: () => void;
   readonly versionCheckDraft: string;
   readonly onVersionCheckDraftChange: (value: string) => void;
@@ -123,7 +124,7 @@ export function ImporterWorkspace({
   elapsedMs, importState, profiles, selectedProfile,
   updateState,
   onImport, onRefresh, onStart, onOpenUpdates,
-  onSetRealm, onSetHotelView, onSetResizablePresentation, onSetVersionCheckBuild,
+  onSetRealm, onSetHotelView, onSetResizablePresentation, onSetSteamLogin, onSetVersionCheckBuild,
   versionCheckDraft, onVersionCheckDraftChange,
 }: ImporterWorkspaceProps) {
   const latest = importState.latest;
@@ -148,6 +149,7 @@ export function ImporterWorkspace({
     : engineLaunch?.settings?.entryView ?? "custom";
   const currentRealm = engineLaunch?.settings?.realm ?? "ous";
   const resizablePresentation = engineLaunch?.settings?.resizablePresentation !== false;
+  const steamLogin = engineLaunch?.settings?.steamLogin === true;
   const showResizeHotelViewWarning =
     resizablePresentation &&
     (currentHotelView === "hh_entry_uk" || currentHotelView === "hh_entry_es" || currentHotelView === "hh_entry_br" || currentHotelView === "hh_entry_ru");
@@ -233,6 +235,7 @@ export function ImporterWorkspace({
             <span>Realm</span><strong>{ORIGINS_REALMS.find((realm) => realm.id === currentRealm)?.label ?? "US / UK"}</strong>
             <span>Hotel View</span><strong>{HOTEL_VIEW_OPTIONS.find((option) => option.value === currentHotelView)?.label ?? "Default"}</strong>
             <span>Version</span><strong>{compactValue(engineLaunch?.settings?.versionCheckBuild ?? selectedProfile?.versionCheckBuild ?? null)}</strong>
+            <span>Login</span><strong>{steamLogin ? "Steam" : "Standard"}</strong>
             <span>Fidelity</span><strong title={fidelityDetail}>{fidelityLabel}</strong>
             <span>Log</span><strong>{compactValue(latest?.logPath ? latest.logPath.split(/[\\/]/).pop() : null)}</strong>
           </div>
@@ -258,6 +261,13 @@ export function ImporterWorkspace({
             <label className="toggle-row checkbox-first-row">
               <input type="checkbox" checked={resizablePresentation} disabled={launchSettingsDisabled} onChange={(event) => onSetResizablePresentation(event.currentTarget.checked)} />
               <span>Responsive stage resize</span>
+            </label>
+            <label className="toggle-row checkbox-first-row importer-steam-login-row">
+              <input type="checkbox" checked={steamLogin} disabled={launchSettingsDisabled} onChange={(event) => onSetSteamLogin(event.currentTarget.checked)} />
+              <span>
+                <strong>Steam Login</strong>
+                <small>Steam must be running and logged in before starting.</small>
+              </span>
             </label>
             <form className="runtime-input-row importer-version-row" onSubmit={(event) => { event.preventDefault(); onSetVersionCheckBuild(); }}>
               <input value={versionCheckDraft} onChange={(event) => onVersionCheckDraftChange(event.currentTarget.value)} placeholder={selectedProfile?.versionCheckBuild ? String(selectedProfile.versionCheckBuild) : "auto"} disabled={!bridgeAvailable || engineBusy || !selectedProfile} aria-label="Version check build override" />

@@ -788,6 +788,15 @@ img {
   line-height: 1.35;
 }
 
+.importer-steam-login-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-family: var(--font-read);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
 .importer-stage-list {
   display: grid;
   gap: 7px;

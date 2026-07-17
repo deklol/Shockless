@@ -28,6 +28,12 @@ import {
 } from "../shared/originsRealm.js";
 import { appDataStorePath, firstExistingAppDataStorePath } from "./appDataPaths.js";
 import { OriginsRealmGamedataCache } from "./originsRealmGamedata.js";
+import { SteamBridgeManager } from "./steam/SteamBridgeManager.js";
+import {
+  unavailableSteamGuestResult,
+  type SteamGuestMethod,
+  type SteamGuestResult,
+} from "../shared/steam.js";
 
 const RELAY_HOST = "127.0.0.1";
 const DEFAULT_RELAY_WS_PORT = 12326;
@@ -60,6 +66,8 @@ export interface ShocklessSettings {
   readonly customHotelView: boolean | null;
   readonly entryView: string | null;
   readonly versionCheckBuild: number | null;
+  readonly steamLogin: boolean;
+  readonly steamLoginProfileIds: readonly string[];
 }
 
 export interface ShocklessSettingsPatch {
@@ -69,6 +77,7 @@ export interface ShocklessSettingsPatch {
   readonly customHotelView?: boolean | null;
   readonly entryView?: string | null;
   readonly versionCheckBuild?: number | null;
+  readonly steamLogin?: boolean;
 }
 
 interface LaunchContext {
@@ -84,6 +93,7 @@ interface LaunchContext {
     readonly customHotelView: boolean;
     readonly entryView: string | null;
     readonly versionCheckBuild: number | null;
+    readonly steamLogin: boolean;
   };
 }
 
@@ -108,6 +118,8 @@ export class ShocklessEmbedController {
       readonly relayWsPort?: number;
       readonly relayControlPort?: number;
       readonly relayPolicyProvider?: () => PluginRelayPolicy;
+      readonly steamBridge?: SteamBridgeManager;
+      readonly steamLoginAllowed?: boolean;
     },
   ) {
     const cacheRoot = options.cacheNamespace
@@ -144,6 +156,12 @@ export class ShocklessEmbedController {
     const context = this.resolveContext();
     if (!context) return this.status();
     try {
+      if (context.settings.steamLogin) {
+        if (!this.options.steamBridge) throw new Error("Steam Login bridge is unavailable.");
+        await this.options.steamBridge.start();
+      } else if (this.options.steamLoginAllowed !== false) {
+        this.options.steamBridge?.stop();
+      }
       await this.relay.start(context.relay, originsRelayGameConnection(context.realm));
       const baseUrl = await this.staticServer.start(context);
       const embeddedUrl = buildShocklessEmbedUrl(baseUrl, context);
@@ -152,6 +170,7 @@ export class ShocklessEmbedController {
       this.lastError = "";
       return this.toState("running", context, embeddedUrl, "Shockless WebContents is embedded.");
     } catch (error) {
+      if (context.settings.steamLogin) this.options.steamBridge?.stop();
       this.lastError = errorMessage(error);
       return this.toState("error", context, null, this.lastError);
     }
@@ -162,6 +181,7 @@ export class ShocklessEmbedController {
     this.currentContext = null;
     this.staticServer.stop();
     this.relay.stop();
+    if (this.options.steamLoginAllowed !== false) this.options.steamBridge?.stop();
     return this.status();
   }
 
@@ -170,6 +190,21 @@ export class ShocklessEmbedController {
     this.currentContext = null;
     this.staticServer.stop();
     this.relay.stop();
+    if (this.options.steamLoginAllowed !== false) this.options.steamBridge?.stop();
+  }
+
+  ownsSteamGuestUrl(senderUrl: string): boolean {
+    if (!this.currentContext?.settings.steamLogin || !this.currentUrl || !this.options.steamBridge?.ready) return false;
+    try {
+      return new URL(senderUrl).origin === new URL(this.currentUrl).origin;
+    } catch {
+      return false;
+    }
+  }
+
+  callSteamGuest(senderUrl: string, method: SteamGuestMethod): SteamGuestResult {
+    if (!this.ownsSteamGuestUrl(senderUrl)) return unavailableSteamGuestResult(method);
+    return this.options.steamBridge?.call(method) ?? unavailableSteamGuestResult(method);
   }
 
   private resolveContext(): LaunchContext | null {
@@ -207,6 +242,10 @@ export class ShocklessEmbedController {
           versionCheckBuild:
             positiveInteger(process.env.SHOCKLESS_VERSION_CHECK_BUILD) ??
             (versionSettingApplies ? shocklessSettings.versionCheckBuild : profile.versionCheckBuild),
+          steamLogin:
+            settingApplies &&
+            shocklessSettings.steamLogin &&
+            this.options.steamLoginAllowed !== false,
         },
       };
     } catch (error) {
@@ -247,6 +286,7 @@ export function buildShocklessEmbedUrl(baseUrl: string, context: LaunchContext):
   if (context.settings.resizablePresentation) url.searchParams.set("resizablePresentation", "1");
   if (context.settings.customHotelView) url.searchParams.set("customHotelView", "1");
   else if (context.settings.entryView) url.searchParams.set("entryView", context.settings.entryView);
+  if (context.settings.steamLogin) url.searchParams.set("steamLogin", "1");
   url.searchParams.set("bridgeHost", RELAY_HOST);
   url.searchParams.set("bridgePort", String(context.relayWsPort));
   url.searchParams.set("connection.info.host", gameConnection.host);
@@ -373,6 +413,10 @@ class EmbeddedStaticServer {
               : [];
     if (rootKey === "client") {
       const normalizedRequestPath = requestPath.replace(/\\/g, "/").toLowerCase();
+      if (normalizedRequestPath === "steam_build.txt") {
+        sendText(response, 200, steamBuildMarkerText(context.settings.steamLogin));
+        return;
+      }
       if (normalizedRequestPath === "external_variables.txt" || normalizedRequestPath === "external_texts.txt") {
         const clientRoot = join(context.profile.profileRoot, context.profile.paths.client);
         const profileVariables = readOptionalText(safeJoin(clientRoot, "external_variables.txt"));
@@ -763,22 +807,28 @@ function ancestorCandidates(startPath: string, ...parts: readonly string[]): str
 
 export function readShocklessSettings(appDataPath: string): ShocklessSettings {
   const settingsPath = firstExistingAppDataStorePath(appDataPath, "settings.json");
-  if (!existsSync(settingsPath)) {
-    return { activeProfileId: null, realm: DEFAULT_ORIGINS_REALM, resizablePresentation: null, customHotelView: true, entryView: null, versionCheckBuild: null };
-  }
+  if (!existsSync(settingsPath)) return defaultShocklessSettings();
   try {
     const parsed = JSON.parse(readFileSync(settingsPath, "utf8")) as Partial<ShocklessSettings>;
+    const activeProfileId = normalizeProfileId(parsed.activeProfileId);
+    const steamLoginProfileIds = normalizeSteamLoginProfileIds(
+      parsed.steamLoginProfileIds,
+      activeProfileId,
+      parsed.steamLogin,
+    );
     const entryView = normalizeEntryView(parsed.entryView);
     return {
-      activeProfileId: typeof parsed.activeProfileId === "string" ? parsed.activeProfileId : null,
+      activeProfileId,
       realm: normalizeOriginsRealmId(parsed.realm),
       resizablePresentation: typeof parsed.resizablePresentation === "boolean" ? parsed.resizablePresentation : null,
       customHotelView: entryView ? (typeof parsed.customHotelView === "boolean" ? parsed.customHotelView : false) : true,
       entryView,
       versionCheckBuild: normalizeSettingsVersionCheckBuild(parsed.versionCheckBuild),
+      steamLogin: activeProfileId !== null && steamLoginProfileIds.includes(activeProfileId),
+      steamLoginProfileIds,
     };
   } catch {
-    return { activeProfileId: null, realm: DEFAULT_ORIGINS_REALM, resizablePresentation: null, customHotelView: true, entryView: null, versionCheckBuild: null };
+    return defaultShocklessSettings();
   }
 }
 
@@ -790,18 +840,22 @@ function pendingLaunchSettings(appDataPath: string): EngineLaunchState["settings
     customHotelView: settings.customHotelView === true,
     entryView: settings.entryView ?? null,
     versionCheckBuild: null,
+    steamLogin: settings.steamLogin,
   };
 }
 
 export function writeShocklessSettings(appDataPath: string, patch: ShocklessSettingsPatch): ShocklessSettings {
   const current = readShocklessSettings(appDataPath);
+  const activeProfileId = patch.activeProfileId === undefined
+    ? current.activeProfileId
+    : normalizeProfileId(patch.activeProfileId);
+  const steamLoginProfileIds = new Set(current.steamLoginProfileIds);
+  if (patch.steamLogin !== undefined && activeProfileId) {
+    if (patch.steamLogin === true) steamLoginProfileIds.add(activeProfileId);
+    else steamLoginProfileIds.delete(activeProfileId);
+  }
   const next: ShocklessSettings = {
-    activeProfileId:
-      patch.activeProfileId === undefined
-        ? current.activeProfileId
-        : typeof patch.activeProfileId === "string" && patch.activeProfileId.trim()
-          ? patch.activeProfileId.trim()
-          : null,
+    activeProfileId,
     realm: patch.realm === undefined ? current.realm : normalizeOriginsRealmId(patch.realm),
     resizablePresentation:
       patch.resizablePresentation === undefined
@@ -825,6 +879,8 @@ export function writeShocklessSettings(appDataPath: string, patch: ShocklessSett
         : patch.versionCheckBuild === null
           ? null
           : normalizeSettingsVersionCheckBuild(patch.versionCheckBuild),
+    steamLogin: activeProfileId !== null && steamLoginProfileIds.has(activeProfileId),
+    steamLoginProfileIds: [...steamLoginProfileIds].sort(),
   };
   const normalizedNext: ShocklessSettings = {
     ...next,
@@ -834,6 +890,44 @@ export function writeShocklessSettings(appDataPath: string, patch: ShocklessSett
   mkdirSync(dirname(settingsPath), { recursive: true });
   writeFileSync(settingsPath, `${JSON.stringify(normalizedNext, null, 2)}\n`, "utf8");
   return normalizedNext;
+}
+
+function defaultShocklessSettings(): ShocklessSettings {
+  return {
+    activeProfileId: null,
+    realm: DEFAULT_ORIGINS_REALM,
+    resizablePresentation: null,
+    customHotelView: true,
+    entryView: null,
+    versionCheckBuild: null,
+    steamLogin: false,
+    steamLoginProfileIds: [],
+  };
+}
+
+function normalizeProfileId(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeSteamLoginProfileIds(
+  value: unknown,
+  legacyActiveProfileId: string | null,
+  legacySteamLogin: unknown,
+): readonly string[] {
+  const profileIds = new Set<string>();
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const profileId = normalizeProfileId(entry);
+      if (profileId) profileIds.add(profileId);
+    }
+  } else if (legacySteamLogin === true && legacyActiveProfileId) {
+    profileIds.add(legacyActiveProfileId);
+  }
+  return [...profileIds].sort();
+}
+
+export function steamBuildMarkerText(enabled: boolean): string {
+  return enabled ? "1\n" : "0\n";
 }
 
 const allowedEntryViews = new Set(["hh_entry_uk", "hh_entry_es", "hh_entry_br", "hh_entry_ru"]);

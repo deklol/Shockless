@@ -14,6 +14,7 @@ import {
   embeddedResizablePresentation,
   normalizeOriginsExternalVariables,
   readShocklessSettings,
+  steamBuildMarkerText,
   writeShocklessSettings,
 } from "../src/main/shocklessEmbed";
 import { ClientLibraryStore, findProfileRootsInSource } from "../src/main/clientLibrary";
@@ -914,6 +915,7 @@ test("embedded Shockless launch URL is built from selected profile metadata", ()
           customHotelView: false,
           entryView: null,
           versionCheckBuild: null,
+          steamLogin: false,
         },
       }),
     );
@@ -921,6 +923,7 @@ test("embedded Shockless launch URL is built from selected profile metadata", ()
     assert.equal(url.searchParams.get("profile"), "dynamic-profile");
     assert.equal(url.searchParams.get("profileVersion"), "release-current");
     assert.equal(url.searchParams.get("resizablePresentation"), "1");
+    assert.equal(url.searchParams.has("steamLogin"), false);
     assert.equal(url.searchParams.get("bridgeHost"), "127.0.0.1");
     assert.equal(url.searchParams.get("bridgePort"), "12340");
     assert.equal(url.searchParams.get("connection.info.host"), "game-ous.habbo.com");
@@ -1069,6 +1072,8 @@ test("Shockless launch settings default to custom hotel view", () => {
     assert.equal(defaults.realm, "ous");
     assert.equal(defaults.customHotelView, true);
     assert.equal(defaults.entryView, null);
+    assert.equal(defaults.steamLogin, false);
+    assert.deepEqual(defaults.steamLoginProfileIds, []);
 
     const settingsRoot = join(appData, "ShocklessEngine");
     mkdirSync(settingsRoot, { recursive: true });
@@ -1094,9 +1099,35 @@ test("Shockless launch settings default to custom hotel view", () => {
     const explicitCustom = writeShocklessSettings(appData, { customHotelView: true, entryView: null });
     assert.equal(explicitCustom.customHotelView, true);
     assert.equal(explicitCustom.entryView, null);
+
+    const steamEnabled = writeShocklessSettings(appData, { activeProfileId: "release331", steamLogin: true });
+    assert.equal(steamEnabled.steamLogin, true);
+    assert.equal(readShocklessSettings(appData).steamLogin, true);
+    assert.deepEqual(steamEnabled.steamLoginProfileIds, ["release331"]);
+
+    const otherProfile = writeShocklessSettings(appData, { activeProfileId: "release332" });
+    assert.equal(otherProfile.steamLogin, false);
+    const otherProfileEnabled = writeShocklessSettings(appData, { steamLogin: true });
+    assert.equal(otherProfileEnabled.steamLogin, true);
+    assert.deepEqual(otherProfileEnabled.steamLoginProfileIds, ["release331", "release332"]);
+    const originalProfile = writeShocklessSettings(appData, { activeProfileId: "release331" });
+    assert.equal(originalProfile.steamLogin, true);
+
+    const legacyAppData = join(appData, "legacy-steam-settings");
+    const legacySettingsRoot = join(legacyAppData, "ShocklessEngine");
+    mkdirSync(legacySettingsRoot, { recursive: true });
+    writeFileSync(join(legacySettingsRoot, "settings.json"), `${JSON.stringify({ activeProfileId: "legacy-profile", steamLogin: true })}\n`, "utf8");
+    const migratedSteamSetting = readShocklessSettings(legacyAppData);
+    assert.equal(migratedSteamSetting.steamLogin, true);
+    assert.deepEqual(migratedSteamSetting.steamLoginProfileIds, ["legacy-profile"]);
   } finally {
     rmSync(appData, { recursive: true, force: true });
   }
+});
+
+test("Steam launch marker is deterministic and source-compatible", () => {
+  assert.equal(steamBuildMarkerText(false), "0\n");
+  assert.equal(steamBuildMarkerText(true), "1\n");
 });
 
 test("Shockless launch settings drop stale VERSIONCHECK overrides", () => {

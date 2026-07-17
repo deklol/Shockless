@@ -713,11 +713,27 @@ describe("OriginsResizeEngine", () => {
     loginBSprite.locH = 650;
     loginBSprite.locV = 240;
     loginB.props.set("pspritelist", LingoPropList.fromPairs([["login_b_bg", loginBSprite]]));
+    const loginSteam = windowInstance(640, 100, 202, 102);
+    const loginSteamSprite = new SpriteChannel(96);
+    loginSteamSprite.locH = 650;
+    loginSteamSprite.locV = 110;
+    loginSteam.props.set("pspritelist", LingoPropList.fromPairs([["steam_logo", loginSteamSprite]]));
+    const loginInterface = new ScriptInstance(moduleFor("Login Interface Class"));
+    const unrelatedInterface = new ScriptInstance(moduleFor("Unrelated Interface Class"));
+    const unrelatedWindow = windowInstance(80, 80, 100, 100);
+    objectList.setaProp(symbol("login_interface"), loginInterface, lingoKeyEquals);
+    objectList.setaProp(symbol("unrelated_interface"), unrelatedInterface, lingoKeyEquals);
+    loginA.props.set("pclientid", symbol("login_interface"));
+    loginB.props.set("pclientid", symbol("login_interface"));
+    loginSteam.props.set("pclientid", symbol("login_interface"));
+    unrelatedWindow.props.set("pclientid", symbol("unrelated_interface"));
     objectList.setaProp(symbol("entry_interface"), entryInterface, lingoKeyEquals);
     objectList.setaProp("entry_view", entryView, lingoKeyEquals);
     objectList.setaProp("entry_bar", entryBar, lingoKeyEquals);
     objectList.setaProp(symbol("login_a"), loginA, lingoKeyEquals);
     objectList.setaProp(symbol("login_b"), loginB, lingoKeyEquals);
+    objectList.setaProp(symbol("login_steam"), loginSteam, lingoKeyEquals);
+    objectList.setaProp(symbol("unrelated_entry_window"), unrelatedWindow, lingoKeyEquals);
 
     const engine = new OriginsResizeEngine(movie);
     const snapshot = engine.setViewport(1500, 760);
@@ -726,8 +742,9 @@ describe("OriginsResizeEngine", () => {
       expect.arrayContaining([
         expect.objectContaining({ id: "entry_view", action: "stage-center", x: 270, y: 0 }),
         expect.objectContaining({ id: "entry_bar", action: "bottom-center", x: 270, y: 706 }),
-        expect.objectContaining({ id: "#login_a", action: "entry-stage-follow", x: 910, y: 100 }),
-        expect.objectContaining({ id: "#login_b", action: "entry-stage-follow", x: 910, y: 230 }),
+        expect.objectContaining({ id: "login_a", action: "entry-stage-follow", x: 910, y: 100 }),
+        expect.objectContaining({ id: "login_b", action: "entry-stage-follow", x: 910, y: 230 }),
+        expect.objectContaining({ id: "login_steam", action: "entry-stage-follow", x: 910, y: 100 }),
       ]),
     );
     expect(entryView.props.get("plocx")).toBe(270);
@@ -748,17 +765,25 @@ describe("OriginsResizeEngine", () => {
     expect(loginB.props.get("plocy")).toBe(230);
     expect(loginBSprite.locH).toBe(920);
     expect(loginBSprite.locV).toBe(240);
+    expect(loginSteam.props.get("plocx")).toBe(910);
+    expect(loginSteam.props.get("plocy")).toBe(100);
+    expect(loginSteamSprite.locH).toBe(920);
+    expect(loginSteamSprite.locV).toBe(110);
+    expect(unrelatedWindow.props.get("plocx")).toBe(80);
+    expect(unrelatedWindow.props.get("plocy")).toBe(80);
 
     movie.runtime.callMethod(entryView, "moveto", [0, 0]);
     movie.runtime.callMethod(entryBar, "moveto", [0, 535]);
     movie.runtime.callMethod(loginA, "moveto", [640, 100]);
     movie.runtime.callMethod(loginB, "moveto", [640, 230]);
+    movie.runtime.callMethod(loginSteam, "moveto", [640, 100]);
     const refreshed = engine.apply("source-entry-reset");
 
     expect(refreshed.anchors.some((anchor) => anchor.id === "entry_view")).toBe(true);
     expect(refreshed.anchors.some((anchor) => anchor.id === "entry_bar")).toBe(true);
-    expect(refreshed.anchors.some((anchor) => anchor.id === "#login_a")).toBe(true);
-    expect(refreshed.anchors.some((anchor) => anchor.id === "#login_b")).toBe(true);
+    expect(refreshed.anchors.some((anchor) => anchor.id === "login_a")).toBe(true);
+    expect(refreshed.anchors.some((anchor) => anchor.id === "login_b")).toBe(true);
+    expect(refreshed.anchors.some((anchor) => anchor.id === "login_steam")).toBe(true);
     expect(entryView.props.get("plocx")).toBe(270);
     expect(entryView.props.get("plocy")).toBe(0);
     expect(entryBar.props.get("plocx")).toBe(270);
@@ -767,6 +792,8 @@ describe("OriginsResizeEngine", () => {
     expect(loginA.props.get("plocy")).toBe(100);
     expect(loginB.props.get("plocx")).toBe(910);
     expect(loginB.props.get("plocy")).toBe(230);
+    expect(loginSteam.props.get("plocx")).toBe(910);
+    expect(loginSteam.props.get("plocy")).toBe(100);
 
     entryCloud.locH = 481;
     entryCloud.locV = 121;

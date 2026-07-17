@@ -54,7 +54,7 @@ export class DirectorSpriteInput {
 
   private channelAcceptsInputAt(channel: SpriteChannel, x: number, y: number): boolean {
     if (!channel.member) return false;
-    const local = this.spriteSourcePoint(channel, x, y);
+    const local = this.sourcePointAt(channel, x, y);
     if (!local) return false;
     if (this.dependencies.channelEditable(channel)) return true;
     const override = this.dependencies.inputHitTestOverride(channel, x, y);
@@ -99,10 +99,11 @@ export class DirectorSpriteInput {
     return left.r === right.r && left.g === right.g && left.b === right.b;
   }
 
-  private spriteSourcePoint(
+  sourcePointAt(
     sprite: SpriteChannel,
     stageX: number,
     stageY: number,
+    clampToBounds = false,
   ): { x: number; y: number; width: number; height: number } | null {
     const dependencies = this.dependencies;
     const width = dependencies.spriteWidth(sprite);
@@ -128,7 +129,14 @@ export class DirectorSpriteInput {
     const localX = skewedX - Math.tan(skewX) * localY;
     const sourceX = localX / (scaleX * flipX) + dependencies.spriteRegX(sprite);
     const sourceY = localY / (scaleY * flipY) + dependencies.spriteRegY(sprite);
-    if (sourceX < 0 || sourceY < 0 || sourceX >= sourceWidth || sourceY >= sourceHeight) return null;
-    return { x: sourceX, y: sourceY, width: sourceWidth, height: sourceHeight };
+    if (!clampToBounds && (sourceX < 0 || sourceY < 0 || sourceX >= sourceWidth || sourceY >= sourceHeight)) {
+      return null;
+    }
+    return {
+      x: clampToBounds ? Math.max(0, Math.min(sourceWidth, sourceX)) : sourceX,
+      y: clampToBounds ? Math.max(0, Math.min(Math.max(0, sourceHeight - Number.EPSILON), sourceY)) : sourceY,
+      width: sourceWidth,
+      height: sourceHeight,
+    };
   }
 }

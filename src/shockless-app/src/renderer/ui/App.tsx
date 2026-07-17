@@ -2114,6 +2114,7 @@ export function App() {
     applyVersionCheckBuild,
     setRealm,
     setHotelView,
+    setSteamLogin,
   } = useEngineLifecycleActions({
     appendTimeline,
     applyEngineLaunch,
@@ -2641,6 +2642,7 @@ export function App() {
                 `Responsive stage resize ${enabled ? "enabled" : "disabled"}.`,
               )
             }
+            onSetSteamLogin={setSteamLogin}
             onSetVersionCheckBuild={applyVersionCheckBuild}
             onVersionCheckDraftChange={setVersionCheckDraft}
           />

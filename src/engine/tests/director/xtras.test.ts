@@ -20,7 +20,7 @@ describe("Director Xtra lookup", () => {
 
   it("returns VOID for absent optional Xtras so source fallback guards can run", () => {
     const runtime = new Runtime();
-    for (const name of ["Curl", "FileIO", "SteamXtra", "UnknownXtra"]) {
+    for (const name of ["Curl", "FileIO", "UnknownXtra"]) {
       const ref = runtime.call("xtra", [name]);
       expect(ref).toBe(LINGO_VOID);
       expect(runtime.call("voidP", [ref])).toBe(1);
@@ -53,6 +53,7 @@ describe("Director Xtra lookup", () => {
   it("fails when an implemented Xtra loses its registered provider", () => {
     const runtime = new Runtime();
     expect(() => runtime.call("xtra", ["Multiuser"])).toThrow(UnsupportedFeatureError);
+    expect(() => runtime.call("xtra", ["SteamXtra"])).toThrow(UnsupportedFeatureError);
     expect(runtime.unsupportedDiagnostics().entries[0]).toContain("registered as implemented");
   });
 });

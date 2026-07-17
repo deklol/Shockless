@@ -22,6 +22,7 @@ const migrateLegacyPortableClients =
   process.env.SHOCKLESS_MIGRATE_LEGACY_PORTABLE_CLIENTS === "1";
 const appRoot = join(portableRoot, "resources", "app");
 const packagedEngineRoot = join(portableRoot, "resources", "engine");
+const steamBridgeExecutable = join(workspace, "native", "steam-bridge", "bin", "SteamBridge.exe");
 const appName = "Shockless.exe";
 const manifestFiles = ["shockless.plugin.json", "habbpy.plugin.json"];
 
@@ -116,6 +117,7 @@ const shocklessStandaloneRoot = join(shocklessEngineRoot, "standalone");
 assertInside(resolve(workspace, "dist"), portableRoot);
 await assertPathExists(join(builtMain, "main", "main.js"), "Built main process");
 await assertPathExists(join(builtRenderer, "index.html"), "Built renderer");
+await assertPathExists(steamBridgeExecutable, "Steam Login bridge", "run npm run build:steam-bridge first");
 await assertPluginManifest(pluginTemplateRoot, "Plugin template");
 await assertPathExists(join(pluginTemplateRoot, "plugin.js"), "Plugin template entry");
 await assertPathExists(join(premadePluginsRoot, "README.txt"), "Premade plugin source README");
@@ -174,6 +176,8 @@ await cp(join(shocklessStandaloneRoot, "resources", "relay"), join(portableRoot,
   recursive: true,
   force: true,
 });
+await mkdir(join(portableRoot, "resources", "steam"), { recursive: true });
+await cp(steamBridgeExecutable, join(portableRoot, "resources", "steam", "SteamBridge.exe"), { force: true });
 
 const rootPackage = JSON.parse(await readFile(join(workspace, "package.json"), "utf8"));
 const standalonePackage = JSON.parse(await readFile(join(shocklessStandaloneRoot, "package.json"), "utf8"));
@@ -220,6 +224,7 @@ const summary = {
   engine: relative(workspace, join(packagedEngineRoot, "dist", "index.html")),
   importer: relative(workspace, join(packagedEngineRoot, "standalone", "dist", "main", "cli", "profile-import.js")),
   relayResources: relative(workspace, join(portableRoot, "resources", "relay")),
+  steamBridge: relative(workspace, join(portableRoot, "resources", "steam", "SteamBridge.exe")),
   preservePortableClients,
   migrateLegacyPortableClients,
 };

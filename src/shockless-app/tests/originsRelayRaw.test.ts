@@ -1,7 +1,8 @@
 import { strict as assert } from "node:assert";
 import crypto from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import net, { type Server, type Socket } from "node:net";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { encodeMusMessage } from "../../engine/src/director/mus";
@@ -132,6 +133,100 @@ test("origins relay raw mode reports failed MUS connects without crashing the re
   }
 });
 
+test("Steam authentication stays private without bypassing bidirectional Shockless packet transport", async (t) => {
+  const resourceDir = findRelayResourceDir();
+  if (!resourceDir) {
+    t.skip("relay resource directory is not present in this checkout");
+    return;
+  }
+
+  const previousResourceDir = process.env.ORIGINS_RELAY_RESOURCE_DIR;
+  process.env.ORIGINS_RELAY_RESOURCE_DIR = resourceDir;
+  const temporaryDirectory = mkdtempSync(join(tmpdir(), "shockless-relay-transport-"));
+  const policyPath = join(temporaryDirectory, "plugin-relay-policy.json");
+  writeFileSync(policyPath, JSON.stringify({
+    version: 1,
+    generatedAt: new Date(0).toISOString(),
+    sensitiveClientHeaders: [764, 765],
+    grants: [{
+      pluginId: "packet-test-plugin",
+      permissions: ["packet.read", "packet.inject", "packet.intercept", "packet.intercept.sensitive"],
+    }],
+  }));
+
+  const steamPacket = makeTestPacket(764, Buffer.from("synthetic-private-ticket", "latin1"));
+  const ordinaryClientPacket = makeTestPacket(59, Buffer.from("ordinary-client-payload", "latin1"));
+  const expectedUpstreamBytes = Buffer.concat([
+    frameTestClientPacket(steamPacket),
+    frameTestClientPacket(ordinaryClientPacket),
+  ]);
+  const ordinaryServerPacket = makeTestPacket(29, Buffer.from("ordinary-server-payload", "latin1"));
+
+  const { createOriginsRelayServer } = await import("../src/main/relay/originsRelayV4");
+  let resolveUpstreamBytes: ((value: Buffer) => void) | null = null;
+  const upstreamBytes = new Promise<Buffer>((resolve) => {
+    resolveUpstreamBytes = resolve;
+  });
+  const upstream = net.createServer((socket) => {
+    let received = Buffer.alloc(0);
+    socket.on("data", (chunk) => {
+      received = Buffer.concat([received, chunk]);
+      if (received.length < expectedUpstreamBytes.length || !resolveUpstreamBytes) return;
+      const resolve = resolveUpstreamBytes;
+      resolveUpstreamBytes = null;
+      resolve(received.subarray(0, expectedUpstreamBytes.length));
+      socket.write(Buffer.concat([ordinaryServerPacket, Buffer.from([1])]));
+    });
+  });
+  let transportRelay: Server | null = null;
+
+  try {
+    await listen(upstream, "127.0.0.1", 0);
+    const upstreamPort = addressPort(upstream);
+    transportRelay = createOriginsRelayServer({
+      quiet: true,
+      tcpHost: "127.0.0.1",
+      tcpPort: upstreamPort,
+      dnsBypassHosts: false,
+      pluginRelayPolicyFile: policyPath,
+    });
+    await listen(transportRelay, "127.0.0.1", 0);
+
+    const client = net.connect({ host: "127.0.0.1", port: addressPort(transportRelay) });
+    await onceEvent(client, "connect");
+    const key = crypto.randomBytes(16).toString("base64");
+    client.write(
+      [
+        "GET / HTTP/1.1",
+        "Host: 127.0.0.1",
+        "Upgrade: websocket",
+        "Connection: Upgrade",
+        `Sec-WebSocket-Key: ${key}`,
+        "Sec-WebSocket-Version: 13",
+        "\r\n",
+      ].join("\r\n"),
+      "latin1",
+    );
+    const response = await readUntil(client, "\r\n\r\n");
+    assert.match(response.toString("latin1"), /^HTTP\/1\.1 101 /);
+
+    const browserResponse = readFramePayload(client);
+    client.write(maskedWebSocketFrame(expectedUpstreamBytes));
+    assert.deepEqual(await upstreamBytes, expectedUpstreamBytes);
+    assert.deepEqual(
+      await browserResponse,
+      Buffer.concat([ordinaryServerPacket, Buffer.from([1])]),
+    );
+    client.destroy();
+  } finally {
+    if (transportRelay) await closeServer(transportRelay);
+    await closeServer(upstream);
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+    if (previousResourceDir === undefined) delete process.env.ORIGINS_RELAY_RESOURCE_DIR;
+    else process.env.ORIGINS_RELAY_RESOURCE_DIR = previousResourceDir;
+  }
+});
+
 function listen(server: Server, host: string, port: number): Promise<void> {
   return new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -246,4 +341,22 @@ function maskedWebSocketFrame(payload: Buffer): Buffer {
   const masked = Buffer.from(payload);
   for (let index = 0; index < masked.length; index += 1) masked[index] ^= mask[index % 4];
   return Buffer.concat([Buffer.from([0x82, 0x80 | payload.length]), mask, masked]);
+}
+
+function makeTestPacket(header: number, payload: Buffer): Buffer {
+  return Buffer.concat([encodeTestHabboBase64Int(header, 2), payload]);
+}
+
+function frameTestClientPacket(packet: Buffer): Buffer {
+  return Buffer.concat([encodeTestHabboBase64Int(packet.length, 3), packet]);
+}
+
+function encodeTestHabboBase64Int(value: number, width: number): Buffer {
+  const output = Buffer.alloc(width);
+  let remaining = value;
+  for (let index = width - 1; index >= 0; index -= 1) {
+    output[index] = 0x40 + (remaining & 0x3f);
+    remaining >>= 6;
+  }
+  return output;
 }

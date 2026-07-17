@@ -68,6 +68,15 @@ export class DirectorCursorPresentation {
         source: "sprite",
       };
     }
+    if (sprite && this.options.movie.channelEditable(sprite) && isDefaultCursorValue(spriteCursor)) {
+      return {
+        enabled: this.enabled,
+        cssCursor: "text",
+        source: "sprite",
+        value: 1,
+        member: null,
+      };
+    }
 
     const globalCursor = normalizeDirectorCursorValue(this.options.movie.globalCursor);
     const globalResolved = this.resolveCursorValue(globalCursor);

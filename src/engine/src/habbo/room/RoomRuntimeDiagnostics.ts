@@ -3,6 +3,23 @@ import { type Runtime, ScriptInstance } from "@director/Runtime";
 import { SpriteChannel } from "@director/sprites";
 import { LINGO_VOID, LingoList, LingoPropList, LingoSymbol, LingoVoid, type LingoValue } from "@director/values";
 
+const REDACTED_DIAGNOSTIC_VALUE = "[REDACTED]";
+const SENSITIVE_DIAGNOSTIC_KEYS = new Set([
+  "accesstoken",
+  "authsessionticket",
+  "authticket",
+  "loginpassword",
+  "password",
+  "refreshtoken",
+  "sessiontoken",
+  "steamauthticket",
+  "steamid",
+  "totp",
+  "totpsecret",
+  "userpassword",
+  "webhookurl",
+]);
+
 export function shouldHoldRoomAssetPresentation(buffer: ScriptInstance | null): boolean {
   if (!buffer) return false;
   const placeholders = instancePropValue(buffer, "pplaceholderlist");
@@ -60,7 +77,7 @@ export function summarizeVariables(gCore: LingoValue, names: string[]): Record<s
   const itemList = instancePropValue(manager, "pitemlist");
   if (!(itemList instanceof LingoPropList)) return {};
   const result: Record<string, unknown> = {};
-  for (const name of names) result[name] = summarizeValue(propListLookup(itemList, name), 3);
+  for (const name of names) result[name] = summarizeKeyedValue(name, propListLookup(itemList, name), 3);
   return result;
 }
 
@@ -286,7 +303,10 @@ export function summarizePropListSample(value: LingoValue | undefined, limit = 3
   if (!(value instanceof LingoPropList)) return { count: 0, entries: [] };
   return {
     count: value.count(),
-    entries: value.keys.slice(0, limit).map((key, index) => ({ key: debugValue(key), value: debugValue(value.values[index]) })),
+    entries: value.keys.slice(0, limit).map((key, index) => ({
+      key: debugValue(key),
+      value: isSensitiveDiagnosticKey(key) ? REDACTED_DIAGNOSTIC_VALUE : debugValue(value.values[index]),
+    })),
   };
 }
 
@@ -333,6 +353,10 @@ export function debugValue(value: LingoValue | undefined): unknown {
   if (value instanceof LingoSymbol) return `#${value.name}`;
   if (value instanceof SpriteChannel) return `(sprite ${value.number})`;
   if (value instanceof ScriptInstance) return `<offspring "${value.module.scriptName}">`;
+  // Never stringify an unexplored collection. Lingo's string form includes all
+  // values and can bypass the keyed redaction applied by the summaries below.
+  if (value instanceof LingoList) return { type: "list", count: value.count() };
+  if (value instanceof LingoPropList) return { type: "propList", count: value.count() };
   if (value && typeof value === "object" && "lingoToString" in value && typeof value.lingoToString === "function") {
     return value.lingoToString();
   }
@@ -350,7 +374,7 @@ export function summarizeValue(value: LingoValue | undefined, depth: number): un
       count: value.count(),
       entries: value.keys.slice(0, 20).map((key, index) => ({
         key: debugValue(key),
-        value: summarizeValue(value.values[index], depth - 1),
+        value: summarizeKeyedValue(key, value.values[index], depth - 1),
       })),
     };
   }
@@ -362,11 +386,33 @@ export function summarizeObject(value: LingoValue | undefined, depth: number): u
   if (!(value instanceof ScriptInstance)) return debugValue(value);
   const summary: Record<string, unknown> = {
     object: value.module.scriptName,
-    props: Object.fromEntries(Array.from(value.props.entries()).map(([key, entry]) => [key, summarizeValue(entry, depth)])),
+    props: Object.fromEntries(Array.from(value.props.entries()).map(([key, entry]) => [key, summarizeKeyedValue(key, entry, depth)])),
   };
   const ancestor = value.props.get("ancestor");
   if (ancestor instanceof ScriptInstance && depth > 0) summary.ancestor = summarizeObject(ancestor, depth - 1);
   return summary;
+}
+
+export function isSensitiveDiagnosticKey(value: unknown): boolean {
+  const normalized = normalizeDiagnosticKey(value);
+  return normalized !== null && SENSITIVE_DIAGNOSTIC_KEYS.has(normalized);
+}
+
+export function isSensitiveDiagnosticInvocation(method: string, args: readonly unknown[]): boolean {
+  const normalizedMethod = normalizeDiagnosticKey(method);
+  if (normalizedMethod === "isteamusergetsteamid" || normalizedMethod === "isteamusergetauthsessionticket") return true;
+  if (!normalizedMethod || !["exists", "get", "getaprop", "remove", "set", "setaprop"].includes(normalizedMethod)) return false;
+  return args.some((arg) => isSensitiveDiagnosticKey(arg));
+}
+
+function summarizeKeyedValue(key: unknown, value: LingoValue | undefined, depth: number): unknown {
+  return isSensitiveDiagnosticKey(key) ? REDACTED_DIAGNOSTIC_VALUE : summarizeValue(value, depth);
+}
+
+function normalizeDiagnosticKey(value: unknown): string | null {
+  const raw = value instanceof LingoSymbol ? value.name : typeof value === "string" ? value : null;
+  if (raw === null) return null;
+  return raw.replace(/^#/, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
 }
 
 export function coerceDebugValue(value: unknown): LingoValue {

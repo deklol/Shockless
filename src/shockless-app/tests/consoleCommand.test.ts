@@ -134,6 +134,12 @@ test("mimic relay packet validation allows v3-style avatar packets and rejects s
   assert.equal(sensitive.ok, false);
   if (!sensitive.ok) assert.match(sensitive.message, /sensitive/i);
 
+  for (const header of [764, 765]) {
+    const steamAuth = buildMimicRelayPacketFromControl({ header, bodyHex: "0102" });
+    assert.equal(steamAuth.ok, false);
+    if (!steamAuth.ok) assert.match(steamAuth.message, /sensitive/i);
+  }
+
   const rights = buildMimicRelayPacketFromControl({ header: 96, bodyHex: "0102", packetName: "ASSIGNRIGHTS" });
   assert.equal(rights.ok, false);
 

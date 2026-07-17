@@ -129,6 +129,7 @@ export interface EngineLaunchState {
     readonly customHotelView: boolean;
     readonly entryView: string | null;
     readonly versionCheckBuild: number | null;
+    readonly steamLogin: boolean;
   } | null;
 }
 
@@ -138,6 +139,7 @@ export interface EngineLaunchSettingsPatch {
   readonly customHotelView?: boolean;
   readonly entryView?: string | null;
   readonly versionCheckBuild?: number | null;
+  readonly steamLogin?: boolean;
 }
 
 export type ClientSessionStatus = "not-configured" | "ready" | "running" | "error" | "offline";

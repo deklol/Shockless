@@ -115,6 +115,20 @@ describe("Director text members", () => {
     expect(movie.callMethod(member, "charpostoloc", [5])).toEqual(new LingoPoint(0, 12));
   });
 
+  it("maps aligned text positions in the same coordinates used for rendering", () => {
+    const movie = createMovie();
+    const member = new CastMember("bin", 1, 1, "centered_field", "field", { text: "abc" });
+    movie.setProp(member, "rect", new LingoRect(0, 0, 100, 18));
+    movie.setProp(member, "alignment", LingoSymbol.for("center"));
+    movie.setProp(member, "fontsize", 10);
+
+    const firstCharacter = movie.callMethod(member, "charpostoloc", [1]);
+
+    expect(firstCharacter).toBeInstanceOf(LingoPoint);
+    expect((firstCharacter as LingoPoint).x).toBeGreaterThan(0);
+    expect(movie.callMethod(member, "loctocharpos", [firstCharacter as LingoPoint])).toBe(1);
+  });
+
   it("keeps text advances as Director-style fractional pen positions", () => {
     const movie = createMovie();
     const member = new CastMember("bin", 1, 1, "fractional_writer_test", "text", { text: "abc" });

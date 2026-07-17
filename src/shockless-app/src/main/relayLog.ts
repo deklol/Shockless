@@ -574,9 +574,14 @@ export function parseRelayLine(line: string, index: number, source?: RelayLogSou
         ? Math.max(0, parsedSize - 2)
         : null;
   const loggedBodyStatus = body?.groups?.bodyStatus;
+  const sensitiveClientPacket = direction === "CLIENT"
+    && parsedHeader !== null
+    && isSensitiveRelayClientHeader(parsedHeader);
   const bodyStatus: RelayLogEntry["bodyStatus"] =
     parsedHeader === null
       ? "not-a-packet"
+      : sensitiveClientPacket
+        ? "redacted"
       : loggedBodyStatus === "sampled" || loggedBodyStatus === "redacted"
         ? loggedBodyStatus
         : "not-persisted";
@@ -2110,7 +2115,11 @@ function maskSensitiveRelayText(message: string): string {
     .replace(/public key length \d+/g, "public key length <redacted>")
     .replace(/SECRET_KEY received length \d+/g, "SECRET_KEY received length <redacted>")
     .replace(
-      /(browser -> official\s+\S+\s+header=(?:4|6|202)\b[^\n]*?\sbodySample=)"(?:\\.|[^"\\])*"/g,
+      /(browser -> official\s+\S+\s+header=(?:4|6|202|764|765)\b[^\n]*?\sbodySample=)"(?:\\.|[^"\\])*"/g,
       "$1<redacted>",
     );
+}
+
+function isSensitiveRelayClientHeader(header: number): boolean {
+  return header === 4 || header === 6 || header === 202 || header === 764 || header === 765;
 }

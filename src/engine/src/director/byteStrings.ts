@@ -14,3 +14,18 @@ export function stringFromLatin1Bytes(bytes: Uint8Array): string {
   }
   return output;
 }
+
+const strictUtf8Decoder = new TextDecoder("utf-8", { fatal: true });
+
+/**
+ * Director 11+ Multiuser delivers text messages as Unicode. The Origins relay
+ * forwards decrypted game packets as UTF-8 bytes, but unknown/binary payloads
+ * must remain byte-preserving rather than being replaced with U+FFFD.
+ */
+export function stringFromUtf8Bytes(bytes: Uint8Array): string {
+  try {
+    return strictUtf8Decoder.decode(bytes);
+  } catch {
+    return stringFromLatin1Bytes(bytes);
+  }
+}

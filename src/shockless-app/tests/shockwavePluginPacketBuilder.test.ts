@@ -119,6 +119,12 @@ test("plugin Shockwave packet builder rejects sensitive and invalid packets", ()
   assert.equal(secretByName.ok, false);
   if (!secretByName.ok) assert.match(secretByName.message, /refuses.*GENERATEKEY|sensitive/i);
 
+  for (const header of [764, 765]) {
+    const steamAuth = buildShockwavePluginPacketFromControl({ target: "server", header, bodyHex: "00" });
+    assert.equal(steamAuth.ok, false);
+    if (!steamAuth.ok) assert.match(steamAuth.message, /refuses.*header 76[45]/i);
+  }
+
   const unknownName = buildShockwavePluginPacketFromControl({ packetName: "NOT_A_REAL_PACKET" });
   assert.equal(unknownName.ok, false);
   if (!unknownName.ok) assert.match(unknownName.message, /Unknown client packet name/);

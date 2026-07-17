@@ -565,11 +565,9 @@ function applyDarkenColorFilter(
 }
 
 /**
- * Director foreground/background colorization:
- * foreground color changes black/dark pixels, background color changes
- * white/light pixels. This is the same color-control path exposed to
- * copyPixels as #color/#bgColor, independent from #bgColor's transparency key
- * role in ink 36 and filter role in ink 41.
+ * Materialize Director foreground/background colors for a known 1-bit source.
+ * Color images already contain their resolved pixels; applying this ramp to
+ * them again corrupts fields and other runtime-rendered images.
  */
 function applyDirectorColorization(
   ctx: Canvas2D,
@@ -1413,8 +1411,9 @@ export class LingoImage implements LingoObjectLike {
           break;
       }
 
-      const colorizeFore = ink === 41 ? null : foreColor;
-      const colorizeBg = bgColor && ink !== 33 && ink !== 36 && ink !== 41 ? bgColor : null;
+      const sourceIsOneBit = source.depth === 1;
+      const colorizeFore = sourceIsOneBit && ink !== 41 ? foreColor : null;
+      const colorizeBg = sourceIsOneBit && bgColor && ink !== 33 && ink !== 36 && ink !== 41 ? bgColor : null;
       applyDirectorColorization(stage.ctx, srcW, srcH, colorizeFore, colorizeBg);
 
       if (mask && mask.el) {

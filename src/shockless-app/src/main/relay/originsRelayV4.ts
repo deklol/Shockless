@@ -126,6 +126,8 @@ const PACKETS = {
   TRY_LOGIN: 4,
   UNIQUEID: 6,
   GENERATEKEY: 202,
+  STEAM_LOGIN: 764,
+  STEAM_LINK: 765,
 } as const;
 
 const activeSessions = new Map<number, OriginsRelaySession>();
@@ -1016,7 +1018,11 @@ function readRawMusEvenString(payload: Buffer, offset: number, end: number): { r
 
 function isSensitiveClientPacket(prefix: string, headerId: number): boolean {
   if (!prefix.startsWith("browser -> official")) return false;
-  return headerId === PACKETS.TRY_LOGIN || headerId === PACKETS.UNIQUEID || headerId === PACKETS.GENERATEKEY;
+  return headerId === PACKETS.TRY_LOGIN
+    || headerId === PACKETS.UNIQUEID
+    || headerId === PACKETS.GENERATEKEY
+    || headerId === PACKETS.STEAM_LOGIN
+    || headerId === PACKETS.STEAM_LINK;
 }
 
 function escapedPacketBody(packetBody: Buffer): string {

@@ -36,6 +36,7 @@ interface GameStageProps {
   readonly onSetRealm: (value: OriginsRealmId) => void;
   readonly onSetHotelView: (value: string) => void;
   readonly onSetResizablePresentation: (enabled: boolean) => void;
+  readonly onSetSteamLogin: (enabled: boolean) => void;
   readonly onSetVersionCheckBuild: () => void;
   readonly onVersionCheckDraftChange: (value: string) => void;
 }
@@ -70,6 +71,7 @@ export function GameStage(props: GameStageProps) {
           onSetRealm={props.onSetRealm}
           onSetHotelView={props.onSetHotelView}
           onSetResizablePresentation={props.onSetResizablePresentation}
+          onSetSteamLogin={props.onSetSteamLogin}
           onSetVersionCheckBuild={props.onSetVersionCheckBuild}
           versionCheckDraft={props.versionCheckDraft}
           onVersionCheckDraftChange={props.onVersionCheckDraftChange}

@@ -72,6 +72,11 @@ interface StagePresentationResult {
   readonly offsets: StagePresentationOffset[];
 }
 
+interface EntryStageWindowResult {
+  readonly changed: boolean;
+  readonly ids: Set<string>;
+}
+
 interface WrapperPartBaseline {
   readonly locH: number;
   readonly locV: number;
@@ -342,20 +347,12 @@ export class OriginsResizeEngine {
       if (this.anchorEntryAnimationSprites(entryInterface, entryOffsetX, entryOffsetY, anchors)) markChanged();
     });
 
-    for (const id of ["#login_a", "#login_b"]) {
-      guard(id, "window", "entry-stage-follow", () => {
-        const window = this.object(id);
-        if (!window) return;
-        this.setWideBoundary(window);
-        const seen = this.rememberFromViewport(id, window, this.movie.manifestStageWidth);
-        const x = Math.round(seen.locX + entryOffsetX);
-        const y = Math.round(seen.locY + entryOffsetY);
-        const move = this.moveInstanceTo(window, x, y);
-        if (!move.moved) return;
-        markChanged();
-        anchors.push({ id, kind: "window", action: "entry-stage-follow", x: move.x, y: move.y });
-      });
-    }
+    const entryStageWindowIds = new Set<string>();
+    guard("entry_stage_windows", "window", "entry-stage-follow", () => {
+      const result = this.anchorEntryStageWindows(entryOffsetX, entryOffsetY, anchors);
+      for (const id of result.ids) entryStageWindowIds.add(id);
+      if (result.changed) markChanged();
+    });
 
     for (const id of this.loadingWindowIds()) {
       guard(id, "window", "viewport-center", () => {
@@ -497,10 +494,11 @@ export class OriginsResizeEngine {
     guard("stage_presentations", "visualizer", "stage-follow", () => {
       const managedSprites = this.managedPresentationSprites();
       this.landscapePresentation.collectManagedSprites(managedSprites);
-      const loadingWindows = new Set(this.loadingWindowIds().map((id) => this.normalizedSymbol(id)));
+      const excludedWindows = new Set(this.loadingWindowIds().map((id) => this.normalizedSymbol(id)));
+      for (const id of entryStageWindowIds) excludedWindows.add(id);
       const stagePresentations = this.anchorStagePresentationVisualizers(roomOffsetX, roomOffsetY, anchors);
       if (stagePresentations.changed) markChanged();
-      if (this.anchorStagePresentationWindows(roomOffsetX, roomOffsetY, loadingWindows, anchors)) markChanged();
+      if (this.anchorStagePresentationWindows(roomOffsetX, roomOffsetY, excludedWindows, anchors)) markChanged();
       if (this.anchorFreeStageSprites(roomOffsetX, roomOffsetY, stagePresentations.offsets, managedSprites, anchors)) markChanged();
     });
 
@@ -1104,7 +1102,7 @@ export class OriginsResizeEngine {
   private anchorStagePresentationWindows(
     offsetX: number,
     offsetY: number,
-    loadingWindows: Set<string>,
+    excludedWindows: Set<string>,
     anchors: ResizeEngineAnchor[],
   ): boolean {
     const list = this.objectList();
@@ -1116,7 +1114,7 @@ export class OriginsResizeEngine {
       if (window.module.scriptName !== "Window Instance Class") continue;
       const id = this.normalizedSymbol(list.keys[index] ?? "");
       if (this.isExplicitlyAnchoredWindow(id)) continue;
-      if (loadingWindows.has(id)) continue;
+      if (excludedWindows.has(id)) continue;
       if (!this.isPresentationDepth(this.instanceProp(window, "plocz"))) continue;
       this.setWideBoundary(window);
       const seen = this.rememberFromViewport(`stage_window:${id}`, window, this.movie.manifestStageWidth);
@@ -1134,6 +1132,57 @@ export class OriginsResizeEngine {
       });
     }
     return changed;
+  }
+
+  /**
+   * Entry windows are authored in the fixed Director stage coordinate space.
+   * Follow the source's registerClient relationship instead of naming layouts:
+   * Login Interface Class owns password, Steam, TOTP, error, and future login
+   * windows, while the entry bar and loading windows have separate policies.
+   */
+  private anchorEntryStageWindows(
+    offsetX: number,
+    offsetY: number,
+    anchors: ResizeEngineAnchor[],
+  ): EntryStageWindowResult {
+    const ids = new Set<string>();
+    if (!this.object("entry_view")) return { changed: false, ids };
+    const list = this.objectList();
+    if (!list) return { changed: false, ids };
+    let changed = false;
+    for (let index = 0; index < list.values.length; index += 1) {
+      const window = list.values[index];
+      if (!(window instanceof ScriptInstance)) continue;
+      if (window.module.scriptName !== "Window Instance Class") continue;
+      if (!this.isOwnedByScript(window, "Login Interface Class")) continue;
+      const id = this.normalizedSymbol(list.keys[index] ?? "");
+      if (id === "") continue;
+      ids.add(id);
+      this.setWideBoundary(window);
+      const seen = this.rememberFromViewport(`entry_window:${id}`, window, this.movie.manifestStageWidth);
+      const targetX = Math.round(seen.locX + offsetX);
+      const targetY = Math.round(seen.locY + offsetY);
+      const move = this.moveInstanceTo(window, targetX, targetY);
+      if (!move.moved) continue;
+      changed = true;
+      anchors.push({
+        id,
+        kind: "window",
+        action: "entry-stage-follow",
+        x: move.x,
+        y: move.y,
+      });
+    }
+    return { changed, ids };
+  }
+
+  private isOwnedByScript(window: ScriptInstance, scriptName: string): boolean {
+    const clientId = this.instanceProp(window, "pClientID");
+    const list = this.objectList();
+    if (!list) return false;
+    const owner = list.getaProp(clientId, lingoKeyEquals);
+    if (!(owner instanceof ScriptInstance)) return false;
+    return this.instanceChain(owner).some((instance) => instance.module.scriptName === scriptName);
   }
 
   private anchorFreeStageSprites(
@@ -1544,8 +1593,6 @@ export class OriginsResizeEngine {
       id === "room_info_stand" ||
       id === "room_interface" ||
       id === "habbo_hand_buttons" ||
-      id === "login_a" ||
-      id === "login_b" ||
       id === "loading room"
     );
   }

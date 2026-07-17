@@ -171,7 +171,6 @@ The verified Shockless ProjectorRays executable is included for normal builds. I
 ## Credits
 
 Shockless uses ProjectorRays resources in its Director/Shockwave import workflow. [ProjectorRays](https://github.com/ProjectorRays/ProjectorRays) is maintained by the ProjectorRays project.
-Shockless used [LibreShockwave](https://github.com/Quackster/LibreShockwave), [ScummVM](https://github.com/scummvm/scummvm) & [DirPlayer](https://github.com/igorlira/dirplayer-rs) as a source of logic reference & inspiration for this project, theirs will be updated a lot more than mine. Please consider supporting them over Shockless.
 
 ## License
 

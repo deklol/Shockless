@@ -4,6 +4,16 @@ export type EngineWebviewElement = HTMLElement & {
   reload?: () => void;
 };
 
+function hasAttachedWebviewGuest(webview: EngineWebviewElement): boolean {
+  if (!webview.isConnected) return false;
+  if (typeof webview.getWebContentsId !== "function") return true;
+  try {
+    return webview.getWebContentsId() > 0;
+  } catch {
+    return false;
+  }
+}
+
 export interface RuntimeRoomReady {
   readonly ready?: boolean;
   readonly route?: string;
@@ -311,6 +321,9 @@ export async function readEngineRuntimeSnapshot(
   webview: EngineWebviewElement,
   scopes: readonly EngineRuntimeSnapshotScope[] = ["full"],
 ): Promise<EngineRuntimeSnapshot> {
+  if (!hasAttachedWebviewGuest(webview)) {
+    throw new Error("Shockless game webview is not ready.");
+  }
   return webview.executeJavaScript<EngineRuntimeSnapshot>(`
     (async (requestedScopes) => {
       const snapshotStartedAt = performance.now();
@@ -654,7 +667,11 @@ export async function runEngineRuntimeAction(
   webview: EngineWebviewElement,
   action: EngineRuntimeAction,
 ): Promise<EngineRuntimeActionResult> {
-  return webview.executeJavaScript<EngineRuntimeActionResult>(`
+  if (!hasAttachedWebviewGuest(webview)) {
+    return { ok: false, message: "Shockless game webview is not ready." };
+  }
+  try {
+    return await webview.executeJavaScript<EngineRuntimeActionResult>(`
     (async (action) => {
       const dev = window.__engine?.dev;
       if (!dev) return { ok: false, message: "Shockless dev API is not ready." };
@@ -951,5 +968,8 @@ export async function runEngineRuntimeAction(
         return { ok: false, message: error instanceof Error ? error.message : String(error) };
       }
     })(${JSON.stringify(action)})
-  `);
+    `);
+  } catch {
+    return { ok: false, message: "Shockless game webview is not available." };
+  }
 }

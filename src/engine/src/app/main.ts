@@ -17,6 +17,7 @@ import { DirectorInputBindings, type DirectorModifierState } from "../habbo/ui/i
 import { SourceInputAutomation } from "../habbo/ui/input/SourceInputAutomation";
 import { DirectorCursorPresentation } from "../habbo/ui/cursor/DirectorCursorPresentation";
 import { DirectorTickScheduler } from "./DirectorTickScheduler";
+import { createBrowserSteamXtraProvider } from "@director/xtras/steam/SteamXtra";
 import { RendererHealthMonitor } from "./RendererHealthMonitor";
 import { classifyFrameStutterPhase, FrameStutterDiagnostics } from "./FrameStutterDiagnostics";
 import {
@@ -32,6 +33,7 @@ import {
   coerceDebugValue,
   debugValue,
   instancePropValue,
+  isSensitiveDiagnosticInvocation,
   objectManagerList,
   propListLookup,
   propListValue,
@@ -632,6 +634,8 @@ async function boot(): Promise<void> {
     },
     captureStageImage,
     audioBackend,
+    undefined,
+    createBrowserSteamXtraProvider(),
   );
   movie.setAudioTraceContext({ profileId: runtimeVersion });
   for (const entry of (params.get("traceMemberImages") ?? "")
@@ -2617,6 +2621,11 @@ async function boot(): Promise<void> {
           text: c.member!.type === "field" || c.member!.type === "text" ? c.member!.text : undefined,
         })),
     keyboardFocus: () => movie.keyboardFocusSprite,
+    stageImageData: () => {
+      const image = captureStageImage();
+      const el = image?.el as HTMLCanvasElement | undefined;
+      return el ? el.toDataURL("image/png") : null;
+    },
     memberImageData: (name: string) => {
       const exact = movie.channels.find((c) => c.member?.name === name);
       if (exact?.member) {
@@ -2729,6 +2738,7 @@ async function boot(): Promise<void> {
     },
     windowElements: (id: string, includeImages = false) => summarizeSourceWindow(id, Boolean(includeImages)),
     objectMethod: (id: string, method: string, args: unknown[] = []) => {
+      if (isSensitiveDiagnosticInvocation(method, args)) return "[REDACTED]";
       const objectList = objectManagerList(movie.runtime.getGlobal("gcore"));
       if (!objectList) return null;
       const object = propListLookup(objectList, id);

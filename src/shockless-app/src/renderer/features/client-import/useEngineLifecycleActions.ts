@@ -162,6 +162,16 @@ export function useEngineLifecycleActions(options: UseEngineLifecycleActionsOpti
     [updateEngineLaunchSettings],
   );
 
+  const setSteamLogin = useCallback(
+    (enabled: boolean) => {
+      void updateEngineLaunchSettings(
+        { steamLogin: enabled },
+        `Steam Login ${enabled ? "enabled" : "disabled"}.`,
+      );
+    },
+    [updateEngineLaunchSettings],
+  );
+
   return {
     importClientReference,
     selectClientProfile,
@@ -171,5 +181,6 @@ export function useEngineLifecycleActions(options: UseEngineLifecycleActionsOpti
     applyVersionCheckBuild,
     setRealm,
     setHotelView,
+    setSteamLogin,
   };
 }

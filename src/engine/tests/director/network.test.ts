@@ -19,6 +19,7 @@ import {
   rewriteRelease306VersionCheckPacket,
   stringFromLatin1Bytes,
 } from "../../src/director/network";
+import { stringFromUtf8Bytes } from "../../src/director/byteStrings";
 import { LingoBitmapMedia } from "../../src/director/imaging";
 import { LINGO_VOID, LingoPropList, LingoValue, symbol } from "../../src/director/values";
 
@@ -199,6 +200,13 @@ describe("Director network bridge", () => {
     expect(stringFromLatin1Bytes(latin1BytesFromString(text))).toBe(text);
   });
 
+  it("decodes valid UTF-8 while preserving malformed game payload bytes", () => {
+    expect(stringFromUtf8Bytes(new TextEncoder().encode("español áéíóúü ¿¡"))).toBe(
+      "español áéíóúü ¿¡",
+    );
+    expect(stringFromUtf8Bytes(Uint8Array.from([0x40, 0xff, 0x01]))).toBe("@ÿ\u0001");
+  });
+
   it("formats v306 outgoing TRY_LOGIN traces without leaking the password", () => {
     const user = "sample-user";
     const pass = "sampleSecret!";
@@ -278,8 +286,15 @@ describe("Director network bridge", () => {
     await Promise.resolve();
     expect(lastContent).toBe("@A\u0001");
 
-    expect(movie.callMethod(multiuser, "sendnetmessage", [0, 0, "@Chello"])).toBe(1);
-    expect([...socket!.sent[0]!]).toEqual([64, 67, 104, 101, 108, 108, 111]);
+    const accentedPacket = "@Aespañol áéíóúü ¿¡\u0001";
+    socket!.message(new TextEncoder().encode(accentedPacket).buffer);
+    await Promise.resolve();
+    expect(lastContent).toBe(accentedPacket);
+
+    const outboundBytes = new TextEncoder().encode("@Cespañol");
+    const outboundByteString = stringFromLatin1Bytes(outboundBytes);
+    expect(movie.callMethod(multiuser, "sendnetmessage", [0, 0, outboundByteString])).toBe(1);
+    expect([...socket!.sent[0]!]).toEqual([...outboundBytes]);
   });
 
   it("routes MUS connections through the raw bridge and frames text messages", async () => {

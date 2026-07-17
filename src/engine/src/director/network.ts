@@ -1,7 +1,7 @@
 import { ScriptInstance } from "./Runtime";
 import * as ops from "./ops";
 import { LINGO_VOID, LingoObjectLike, LingoPropList, LingoSymbol, LingoValue } from "./values";
-import { latin1BytesFromString, stringFromLatin1Bytes } from "./byteStrings";
+import { latin1BytesFromString, stringFromLatin1Bytes, stringFromUtf8Bytes } from "./byteStrings";
 import { decodeMusMessages, encodeMusLogonMessage, encodeMusMessage } from "./mus";
 
 export { latin1BytesFromString, stringFromLatin1Bytes } from "./byteStrings";
@@ -807,15 +807,19 @@ class MultiuserXtraInstance implements LingoObjectLike {
       return data;
     }
     if (data instanceof ArrayBuffer) {
-      return stringFromLatin1Bytes(new Uint8Array(data));
+      return this.stringFromSocketBytes(new Uint8Array(data));
     }
     if (ArrayBuffer.isView(data)) {
-      return stringFromLatin1Bytes(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+      return this.stringFromSocketBytes(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
     }
     if (typeof Blob !== "undefined" && data instanceof Blob) {
-      return stringFromLatin1Bytes(new Uint8Array(await data.arrayBuffer()));
+      return this.stringFromSocketBytes(new Uint8Array(await data.arrayBuffer()));
     }
     return "";
+  }
+
+  private stringFromSocketBytes(bytes: Uint8Array): string {
+    return this.bridgeMode === "game" ? stringFromUtf8Bytes(bytes) : stringFromLatin1Bytes(bytes);
   }
 }
 

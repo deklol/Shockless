@@ -645,6 +645,24 @@ test("relay log parser keeps sensitive v4 relay packet bodies redacted", () => {
   assert.match(entry.bodyNote, /Sensitive client payload redacted/);
 });
 
+test("relay log parser strips Steam authentication material from sampled legacy lines", () => {
+  const fakeTicket = "shockless-test-ticket-not-a-real-credential";
+  const entry = parseRelayLine(
+    `[origins-relay #5] browser -> official plaintext header=764 bytes=44 bodyStatus=sampled bodyLen=42 bodySample="${fakeTicket}"`,
+    21,
+  );
+
+  assert.ok(entry);
+  assert.equal(entry.direction, "CLIENT");
+  assert.equal(entry.header, 764);
+  assert.equal(entry.bodyStatus, "redacted");
+  assert.equal(entry.bodyText, null);
+  assert.equal(entry.bodyHex, null);
+  assert.deepEqual(entry.decodedFields, []);
+  assert.equal(entry.message.includes(fakeTicket), false);
+  assert.match(entry.message, /bodySample=<redacted>/);
+});
+
 function incoming(value: string): string {
   return `${value}\x02`;
 }

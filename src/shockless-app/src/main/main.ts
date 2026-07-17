@@ -44,6 +44,11 @@ import type {
 } from "../shared/window-api.js";
 import type { PluginCreateRequest } from "../shared/plugin.js";
 import { errorMessage } from "../shared/errors.js";
+import {
+  STEAM_GUEST_IPC_CHANNEL,
+  isSteamGuestMethod,
+  unavailableSteamGuestResult,
+} from "../shared/steam.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,6 +123,12 @@ function createWindow(): void {
   });
 
   mainWindow = window;
+  window.webContents.on("will-attach-webview", (_event, webPreferences) => {
+    webPreferences.preload = steamGuestPreloadPath();
+    webPreferences.contextIsolation = true;
+    webPreferences.nodeIntegration = false;
+    webPreferences.sandbox = false;
+  });
   window.once("ready-to-show", () => {
     if (showMainWindow && !window.isDestroyed()) window.show();
   });
@@ -179,6 +190,18 @@ ipcMain.on("shockless:renderer-heartbeat", (_event, heartbeat: RendererHeartbeat
 });
 ipcMain.on("shockless:runtime-health", (_event, report: RuntimeHealthReport) => {
   reliabilityDiagnostics().runtimeHealth(report);
+});
+ipcMain.on(STEAM_GUEST_IPC_CHANNEL, (event, method: unknown) => {
+  if (!isSteamGuestMethod(method)) {
+    event.returnValue = 0;
+    return;
+  }
+  try {
+    const senderUrl = event.senderFrame?.url ?? event.sender.getURL();
+    event.returnValue = sessionManager().steamGuestCall(senderUrl, method);
+  } catch {
+    event.returnValue = unavailableSteamGuestResult(method);
+  }
 });
 ipcMain.handle("shockless:get-app-preferences", () =>
   appPreferencesState(appDataPath(), launchHardwareAccelerationEnabled),
@@ -411,6 +434,7 @@ ipcMain.handle("shockless:set-engine-launch-settings", (_event, patch: EngineLau
     customHotelView: typeof patch?.customHotelView === "boolean" ? patch.customHotelView : undefined,
     entryView: typeof patch?.entryView === "string" ? patch.entryView : patch?.entryView === null ? null : undefined,
     versionCheckBuild,
+    steamLogin: typeof patch?.steamLogin === "boolean" ? patch.steamLogin : undefined,
   });
   return sessionManager().engineStatus();
 });
@@ -638,8 +662,13 @@ function sessionManager(): MultiSessionManager {
     library: library(),
     hardwareAccelerationActive: launchHardwareAccelerationEnabled,
     relayPolicyProvider: () => pluginManager().relayPolicy(),
+    steamGuestPreloadPath: steamGuestPreloadPath(),
   });
   return multiSessionManager;
+}
+
+function steamGuestPreloadPath(): string {
+  return path.join(__dirname, "../preload/steam-guest-preload.cjs");
 }
 
 function pluginManager(): PluginManager {

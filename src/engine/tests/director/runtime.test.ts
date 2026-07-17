@@ -1479,13 +1479,18 @@ describe("runtime property access", () => {
     }
   });
 
-  it("applies copyPixels #color foreground colorization", () => {
+  it("applies copyPixels #color foreground materialization to known 1-bit sources", () => {
     withPixelCanvas(() => {
       const runtime = new Runtime();
-      const source = new LingoImage(2, 1, 32);
+      const source = LingoImage.fromPaletteIndices(
+        2,
+        1,
+        new Uint8Array([1, 0]),
+        paletteTableForBitmapDepth("systemMac", 1),
+        symbol("systemMac"),
+        1,
+      );
       const dest = new LingoImage(2, 1, 32);
-      source.setPixel(0, 0, new LingoColor(0, 0, 0));
-      source.setPixel(1, 0, new LingoColor(128, 128, 128));
 
       runtime.callMethod(dest, "copyPixels", [
         source,
@@ -1495,13 +1500,11 @@ describe("runtime property access", () => {
       ]);
 
       expect(dest.getPixel(0, 0).hex).toBe(0xff0000);
-      const blended = dest.getPixel(1, 0);
-      expect(blended.r).toBeGreaterThan(blended.g);
-      expect(blended.g).toBe(blended.b);
+      expect(dest.getPixel(1, 0).hex).toBe(0xffffff);
     });
   });
 
-  it("keeps copyPixels #color after background-transparent keying", () => {
+  it("does not recolor 32-bit source pixels during background-transparent keying", () => {
     withPixelCanvas(() => {
       const runtime = new Runtime();
       const source = new LingoImage(2, 1, 32);
@@ -1518,7 +1521,30 @@ describe("runtime property access", () => {
         ]),
       ]);
 
-      expect(dest.getPixel(1, 0).hex).toBe(0xffffff);
+      expect(dest.getPixel(1, 0).hex).toBe(0x000000);
+    });
+  });
+
+  it("preserves colors already materialized into a 32-bit runtime image", () => {
+    withPixelCanvas(() => {
+      const runtime = new Runtime();
+      const source = new LingoImage(2, 1, 32, undefined, { initWhite: false });
+      const dest = new LingoImage(2, 1, 32, undefined, { initWhite: false });
+      source.setPixel(0, 0, new LingoColor(0x67, 0x94, 0xa7));
+      source.setPixel(1, 0, new LingoColor(0xee, 0xee, 0xee));
+
+      runtime.callMethod(dest, "copyPixels", [
+        source,
+        source.getRect(),
+        source.getRect(),
+        LingoPropList.fromPairs([
+          [symbol("color"), new LingoColor(0xee, 0xee, 0xee)],
+          [symbol("bgColor"), new LingoColor(0x67, 0x94, 0xa7)],
+        ]),
+      ]);
+
+      expect(dest.getPixel(0, 0).hex).toBe(0x6794a7);
+      expect(dest.getPixel(1, 0).hex).toBe(0xeeeeee);
     });
   });
 

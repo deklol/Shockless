@@ -53,6 +53,7 @@ import * as ops from "./ops";
 import { CastLibRef, StageRef, TimeoutRef, formatDirectorTime } from "./movieObjects";
 import { DirectorNetJobs } from "./movieNetJobs";
 import { DirectorSpriteInput } from "./spriteInput";
+import { NO_DIRECTOR_HOST_XTRAS, type DirectorHostXtraProvider } from "./hostXtras";
 export { SoundChannelRef } from "./audio/DirectorSoundChannel";
 export { CastLibRef, StageRef, TimeoutRef } from "./movieObjects";
 
@@ -233,7 +234,7 @@ export class DirectorMovie implements DirectorHost {
   private lastMouseDownV = Number.NaN;
   private lastMouseDownDoubleClickSprite: SpriteChannel | null = null;
   private pendingDoubleClickFlag = 0;
-  keyboardFocusSprite: LingoValue = 0;
+  keyboardFocusSprite: LingoValue = -1;
   /** `the key` / `the keyCode` of the most recent keyboard event. */
   lastKey = "";
   lastKeyCode = 0;
@@ -249,6 +250,7 @@ export class DirectorMovie implements DirectorHost {
   selEnd = 0;
   /** Sprite that received the last mouseDown (mouseUp vs mouseUpOutSide). */
   private mouseDownSprite: SpriteChannel | null = null;
+  private editablePointerSelection: { channelNumber: number; anchorPosition: number } | null = null;
   private hoverSprite: SpriteChannel | null = null;
   private rolloverSprite: SpriteChannel | null = null;
   private textMeasureContext: CanvasRenderingContext2D | null | undefined;
@@ -285,6 +287,7 @@ export class DirectorMovie implements DirectorHost {
     private readonly stageImageProvider: () => LingoImage | null = () => null,
     soundBackend: DirectorSoundBackend = new VirtualAudioBackend(),
     audioClock: DirectorAudioClock = new SystemDirectorAudioClock(),
+    private readonly hostXtras: DirectorHostXtraProvider = NO_DIRECTOR_HOST_XTRAS,
   ) {
     this.runtime = new Runtime(this);
     this.audioTrace = new DirectorAudioTraceBuffer(audioClock);
@@ -879,6 +882,16 @@ export class DirectorMovie implements DirectorHost {
   pointerMove(x: number, y: number): void {
     this.mouseH = Math.round(x);
     this.mouseV = Math.round(y);
+    const selection = this.editablePointerSelection;
+    if (this.mouseDownFlag === 1 && selection) {
+      const channel = this.channels[selection.channelNumber] ?? null;
+      const position = channel ? this.editableCharacterPosition(channel, this.mouseH, this.mouseV, true) : null;
+      if (position !== null && (this.selStart !== selection.anchorPosition || this.selEnd !== position)) {
+        this.selStart = selection.anchorPosition;
+        this.selEnd = position;
+        this.onStageChange();
+      }
+    }
     const over = this.updateRolloverSprite(["mouseenter", "mouseleave", "mousewithin", "mousedown", "mouseup"]);
     if (over !== this.hoverSprite) {
       this.sendSpriteEvent(this.hoverSprite, "mouseleave");
@@ -897,6 +910,36 @@ export class DirectorMovie implements DirectorHost {
     return Number(channel.member.style.get("editable") ?? 0) === 1;
   }
 
+  private editableCharacterPosition(
+    channel: SpriteChannel,
+    stageX: number,
+    stageY: number,
+    clampToBounds: boolean,
+  ): number | null {
+    const member = channel.member;
+    if (!member || (member.type !== "field" && member.type !== "text")) return null;
+    const point = this.spriteInput.sourcePointAt(channel, stageX, stageY, clampToBounds);
+    if (!point) return null;
+    return this.memberLocToCharPos(member, new LingoPoint(point.x, point.y));
+  }
+
+  private spritePointToChar(channel: SpriteChannel, point: LingoPoint): number {
+    const member = channel.member;
+    if (!member || (member.type !== "field" && member.type !== "text")) return -1;
+    const local = this.spriteInput.sourcePointAt(channel, point.x, point.y);
+    if (!local) return -1;
+    const lineHeight = this.memberLineHeight(member);
+    const rowIndex = Math.floor(local.y / lineHeight);
+    const rows = this.layoutTextMember(member);
+    if (rowIndex < 0 || rowIndex >= rows.length) return -1;
+    const row = rows[rowIndex]!;
+    const memberWidth = Math.max(1, this.memberWidth(member));
+    const baseX = this.memberTextRowBaseX(member, row.text, row.start, memberWidth);
+    const rowWidth = this.measureTextSpan(member, row.text, row.start);
+    if (local.x < baseX || local.x > baseX + rowWidth) return -1;
+    return this.memberLocToCharPos(member, new LingoPoint(local.x, local.y));
+  }
+
   private isKeyPressed(query: LingoValue): boolean {
     if (this.keyPressed === "") return false;
     if (isNumber(query)) {
@@ -909,6 +952,7 @@ export class DirectorMovie implements DirectorHost {
 
   pointerDown(): void {
     this.mouseDownFlag = 1;
+    this.editablePointerSelection = null;
     const target = this.updateRolloverSprite(["mousedown", "mouseup", "mouseupoutside"]);
     this.clickOnSprite = target?.number ?? 0;
     this.clickLocH = this.mouseH;
@@ -934,14 +978,33 @@ export class DirectorMovie implements DirectorHost {
       this.lastMouseDownDoubleClickSprite = target;
     }
     this.mouseDownSprite = target;
-    // Director gives editable field sprites keyboard focus on click and
-    // blurs them when the click lands elsewhere.
-    this.keyboardFocusSprite = this.channelEditable(target) ? target!.number : 0;
+    // -1 delegates focus to Score clicks, 0 disables editable input, and a
+    // positive channel is forced focus. Non-editable clicks do not clear a
+    // source-assigned focus such as the room chat field.
+    if (this.channelEditable(target) && Number(this.keyboardFocusSprite) !== 0) {
+      const previousFocus = this.keyboardFocusSprite;
+      this.keyboardFocusSprite = target!.number;
+      const position = this.editableCharacterPosition(target!, this.mouseH, this.mouseV, true);
+      let presentationChanged = previousFocus !== this.keyboardFocusSprite;
+      if (position !== null) {
+        this.editablePointerSelection = {
+          channelNumber: target!.number,
+          anchorPosition: position,
+        };
+        if (this.selStart !== position || this.selEnd !== position) {
+          this.selStart = position;
+          this.selEnd = position;
+          presentationChanged = true;
+        }
+      }
+      if (presentationChanged) this.onStageChange();
+    }
     this.sendSpriteEvent(target, "mousedown");
   }
 
   pointerUp(): void {
     this.mouseDownFlag = 0;
+    this.editablePointerSelection = null;
     const downSprite = this.mouseDownSprite;
     this.mouseDownSprite = null;
     const target = this.updateRolloverSprite(["mouseup", "mouseupoutside", "mousedown"]);
@@ -1303,7 +1366,10 @@ export class DirectorMovie implements DirectorHost {
         return ref;
       }
       case "xtra":
-        return this.network.createXtra(ops.stringOf(args[0] ?? LINGO_VOID));
+        return (
+          this.hostXtras.createXtra(ops.stringOf(args[0] ?? LINGO_VOID)) ??
+          this.network.createXtra(ops.stringOf(args[0] ?? LINGO_VOID))
+        );
       case "new": {
         // timeout("x").new(period, #handler, target) routes here.
         if (args[0] instanceof TimeoutRef) {
@@ -1312,7 +1378,10 @@ export class DirectorMovie implements DirectorHost {
           this.timeouts.set(ref.name, ref);
           return ref;
         }
-        return this.network.createXtraInstance(args[0] ?? LINGO_VOID);
+        return (
+          this.hostXtras.createXtraInstance(args[0] ?? LINGO_VOID) ??
+          this.network.createXtraInstance(args[0] ?? LINGO_VOID)
+        );
       }
       case "forget": {
         if (args[0] instanceof TimeoutRef) {
@@ -2296,6 +2365,16 @@ export class DirectorMovie implements DirectorHost {
    * attached scripts), matching how the source calls
    * `tsprite.registerProcedure(...)` etc. */
   callMethod = (receiver: LingoValue, method: string, args: LingoValue[]): LingoValue | undefined => {
+    if (method.toLowerCase() === "new") {
+      const hostXtraInstance = this.hostXtras.createXtraInstance(receiver);
+      if (hostXtraInstance !== undefined) return hostXtraInstance;
+      const networkXtraInstance = this.network.createXtraInstance(receiver);
+      if (networkXtraInstance !== undefined) return networkXtraInstance;
+    }
+    const hostXtraResult = this.hostXtras.callMethod(receiver, method, args);
+    if (hostXtraResult !== undefined) {
+      return hostXtraResult;
+    }
     const networkResult = this.network.callMethod(receiver, method, args);
     if (networkResult !== undefined) {
       return networkResult;
@@ -2419,6 +2498,10 @@ export class DirectorMovie implements DirectorHost {
       }
     }
     if (receiver instanceof SpriteChannel) {
+      if (method.toLowerCase() === "pointtochar") {
+        const point = args[0];
+        return point instanceof LingoPoint ? this.spritePointToChar(receiver, point) : -1;
+      }
       for (const instance of receiver.scriptInstanceList.items) {
         if (instance instanceof ScriptInstance && this.runtime.hasHandler(instance, method)) {
           return this.runtime.callMethod(instance, method, args);
@@ -2719,15 +2802,24 @@ export class DirectorMovie implements DirectorHost {
 
   private memberCharPosToLoc(member: CastMember, position: number): LingoPoint {
     const lineHeight = this.memberLineHeight(member);
+    const memberWidth = Math.max(1, this.memberWidth(member));
     const pos = Math.max(1, Math.min(position, member.text.length + 1));
     const rows = this.layoutTextMember(member);
     for (const row of rows) {
       if (pos >= row.start && pos <= row.end) {
-        return new LingoPoint(this.measureTextSpan(member, row.text.slice(0, pos - row.start), row.start), row.line * lineHeight);
+        return new LingoPoint(
+          this.memberTextRowBaseX(member, row.text, row.start, memberWidth) +
+            this.measureTextSpan(member, row.text.slice(0, pos - row.start), row.start),
+          row.line * lineHeight,
+        );
       }
     }
     const last = rows[rows.length - 1]!;
-    return new LingoPoint(this.measureTextSpan(member, last.text, last.start), last.line * lineHeight);
+    return new LingoPoint(
+      this.memberTextRowBaseX(member, last.text, last.start, memberWidth) +
+        this.measureTextSpan(member, last.text, last.start),
+      last.line * lineHeight,
+    );
   }
 
   private memberLocToCharPos(member: CastMember, loc: LingoPoint): number {
@@ -2735,11 +2827,13 @@ export class DirectorMovie implements DirectorHost {
     const rowIndex = Math.max(0, Math.floor(loc.y / lineHeight));
     const rows = this.layoutTextMember(member);
     const row = rows[Math.min(rowIndex, rows.length - 1)]!;
-    let width = 0;
+    const memberWidth = Math.max(1, this.memberWidth(member));
+    const localX = loc.x - this.memberTextRowBaseX(member, row.text, row.start, memberWidth);
+    let advanceWidth = 0;
     for (let i = 0; i < row.text.length; i += 1) {
       const advance = this.measureTextSpan(member, row.text[i]!, row.start + i);
-      if (loc.x < width + advance / 2) return row.start + i;
-      width += advance;
+      if (localX < advanceWidth + advance / 2) return row.start + i;
+      advanceWidth += advance;
     }
     return row.end;
   }

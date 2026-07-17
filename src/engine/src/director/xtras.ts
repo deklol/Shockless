@@ -41,9 +41,9 @@ const REGISTRATIONS: readonly DirectorXtraRegistration[] = [
   },
   {
     name: "SteamXtra",
-    status: "absent",
-    provider: "none",
-    detail: "Steam integration is not available in the browser runtime",
+    status: "implemented",
+    provider: "host",
+    detail: "Optional Shockless host bridge for the imported client's Steam login path",
   },
 ];
 

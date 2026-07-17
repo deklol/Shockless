@@ -13,6 +13,11 @@ import { errorMessage } from "../shared/errors.js";
 import { buildMimicRelayPacketFromControl } from "../shared/mimicRelayPackets.js";
 import { parseMultiClientAccounts,type MultiClientAccount } from "../shared/multiClientAccounts.js";
 import type { PluginRelayPolicy } from "../shared/pluginRelayHooks.js";
+import {
+  unavailableSteamGuestResult,
+  type SteamGuestMethod,
+  type SteamGuestResult,
+} from "../shared/steam.js";
 import type {
 ClientRelaySummary,
 ClientRuntimeSummary,
@@ -30,6 +35,7 @@ RelayLogSnapshot,SocialRelayAction,UserRelayAction
 } from "../shared/window-api.js";
 import { GPU_LAUNCH_SWITCHES,readAppPreferences } from "./appPreferences.js";
 import { ClientLibraryStore } from "./clientLibrary.js";
+import { SteamBridgeManager } from "./steam/SteamBridgeManager.js";
 import { ensureProfileAudioCurrent } from "./profileAudioMaintenance.js";
 import { accountStoreSummary,clearEncryptedAccountStore,readEncryptedAccountStore,writeEncryptedAccountStore } from "./encryptedAccountStore.js";
 import {
@@ -238,6 +244,7 @@ interface ManagerOptions {
   readonly library: ClientLibraryStore;
   readonly hardwareAccelerationActive?: boolean;
   readonly relayPolicyProvider?: () => PluginRelayPolicy;
+  readonly steamGuestPreloadPath?: string;
 }
 
 interface MimicState {
@@ -267,6 +274,7 @@ interface SummonClientResult extends GardeningRelayResult {
 
 export class MultiSessionManager {
   private readonly clients = new Map<number, ManagedClient>();
+  private readonly steamBridge = new SteamBridgeManager();
   private readonly commandState: ConsoleCommandState;
   private selectedClientId = MAIN_CLIENT_ID;
   private mainClientId = MAIN_CLIENT_ID;
@@ -402,6 +410,14 @@ export class MultiSessionManager {
     this.stopMimicPoller();
     for (const client of this.clients.values()) this.stopClient(client, { destroyWindow: true });
     this.clients.clear();
+    this.steamBridge.stop();
+  }
+
+  steamGuestCall(senderUrl: string, method: SteamGuestMethod): SteamGuestResult {
+    for (const client of this.clients.values()) {
+      if (client.embed.ownsSteamGuestUrl(senderUrl)) return client.embed.callSteamGuest(senderUrl, method);
+    }
+    return unavailableSteamGuestResult(method);
   }
 
   relayControlPortForClient(clientId: number): number | null {
@@ -1651,6 +1667,7 @@ export class MultiSessionManager {
         focusable: false,
         backgroundColor: "#000000",
         webPreferences: {
+          ...(this.options.steamGuestPreloadPath ? { preload: this.options.steamGuestPreloadPath } : {}),
           contextIsolation: true,
           nodeIntegration: false,
           // sandbox:false is required to call executeJavaScript() on the
@@ -1754,6 +1771,8 @@ export class MultiSessionManager {
         relayWsPort: options.relayWsPort,
         relayControlPort: options.relayControlPort,
         relayPolicyProvider: this.options.relayPolicyProvider,
+        steamBridge: this.steamBridge,
+        steamLoginAllowed: id === MAIN_CLIENT_ID,
       }),
       hiddenWindow: null,
       lastLaunch: null,

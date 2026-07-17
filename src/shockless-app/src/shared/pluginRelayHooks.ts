@@ -28,7 +28,8 @@ export interface PluginRelayDecision {
   readonly reason: string | null;
 }
 
-const DEFAULT_SENSITIVE_CLIENT_HEADERS: readonly number[] = [4, 6, 202];
+const PERMANENTLY_PRIVATE_CLIENT_HEADERS: readonly number[] = [764, 765];
+const DEFAULT_SENSITIVE_CLIENT_HEADERS: readonly number[] = [4, 6, 202, ...PERMANENTLY_PRIVATE_CLIENT_HEADERS];
 
 export function defaultSensitiveClientHeaders(): readonly number[] {
   return DEFAULT_SENSITIVE_CLIENT_HEADERS;
@@ -57,20 +58,32 @@ export function normalizePluginRelayPolicy(value: unknown): PluginRelayPolicy {
 
 export function decidePluginRelayPacket(policy: PluginRelayPolicy | null | undefined, packet: PluginRelayPacketContext): PluginRelayDecision {
   const normalized = normalizePluginRelayPolicy(policy);
+  const permanentlyPrivate = isPermanentlyPrivatePluginRelayPacket(packet);
   const sensitive = isSensitivePluginRelayPacket(packet, normalized.sensitiveClientHeaders);
-  const usableGrants = normalized.grants.filter((grant) => !sensitive || grant.permissions.includes("packet.intercept.sensitive"));
+  const usableGrants = permanentlyPrivate
+    ? []
+    : normalized.grants.filter((grant) => !sensitive || grant.permissions.includes("packet.intercept.sensitive"));
   return {
     allowed: true,
     sensitive,
     readPluginIds: idsWithPermission(usableGrants, "packet.read"),
     interceptPluginIds: idsWithPermission(usableGrants, "packet.intercept"),
     injectPluginIds: idsWithPermission(usableGrants, "packet.inject"),
-    reason: sensitive ? "Sensitive packet hidden from plugins without packet.intercept.sensitive." : null,
+    reason: permanentlyPrivate
+      ? "Steam authentication packets are permanently isolated from plugins."
+      : sensitive
+        ? "Sensitive packet hidden from plugins without packet.intercept.sensitive."
+        : null,
   };
 }
 
 export function isSensitivePluginRelayPacket(packet: PluginRelayPacketContext, sensitiveClientHeaders = DEFAULT_SENSITIVE_CLIENT_HEADERS): boolean {
-  return packet.direction === "client" && sensitiveClientHeaders.includes(packet.header);
+  return packet.direction === "client"
+    && (sensitiveClientHeaders.includes(packet.header) || PERMANENTLY_PRIVATE_CLIENT_HEADERS.includes(packet.header));
+}
+
+export function isPermanentlyPrivatePluginRelayPacket(packet: PluginRelayPacketContext): boolean {
+  return packet.direction === "client" && PERMANENTLY_PRIVATE_CLIENT_HEADERS.includes(packet.header);
 }
 
 function normalizeGrant(value: unknown): PluginRelayGrant | null {

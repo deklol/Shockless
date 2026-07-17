@@ -40,6 +40,7 @@ const requiredFiles = [
   "resources/relay/origins-relay.mjs",
   "resources/relay/shockwave-codec.mjs",
   "resources/relay/bobba-crypto.mjs",
+  "resources/steam/SteamBridge.exe",
 ];
 const requiredFileAlternatives = [
   ["Shockless.exe", "Habbpy v4.exe"],

@@ -16,7 +16,7 @@ export type MimicRelayPacketResult =
   | { readonly ok: true; readonly packet: MimicRelayPacket }
   | { readonly ok: false; readonly message: string };
 
-const sensitiveClientHeaders = new Set([4, 6, 202]);
+const sensitiveClientHeaders = new Set([4, 6, 202, 764, 765]);
 const legacySafeFallbackHeaders = new Set([55, 80, 93, 94]);
 const allowedPacketNames = new Set([
   "carrydrink",
