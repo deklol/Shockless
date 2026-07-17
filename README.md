@@ -48,6 +48,7 @@ This repository includes both the desktop application and engine source under th
 - Director-compatible audio with eight independent channels, queues, loops, offsets, fades, pan, volume, mute, ordinary client sounds, and source-controlled Trax playback.
 - Guided client import with detailed stages, progress, timings, and reusable profiles.
 - Persistent Origins realm selection for US / UK, Spain, and Brazil / Portugal, including complete regional boot data and service routing.
+- Optional Steam login for Steam-linked Origins accounts while retaining Shockless packet relay, plugins, and companion features.
 - Responsive game stage, zoom, session switching, custom cursor support, and performance controls.
 - RuneLite-inspired plugin manager with schema-rendered panels and persistent settings.
 - Sandboxed user plugins with documented room, user, furniture, chat, packet, session, storage, timer, and UI APIs.
@@ -122,11 +123,13 @@ This repository includes both the desktop application and engine source under th
 2. Extract the complete `Shockless` folder.
 3. Run `Shockless.exe`.
 4. Choose **Import/Build Client** and select a compatible compiled client folder or an existing Shockless profile.
-5. Select the Origins realm to connect to. **US / UK (OUS)** is the default.
-6. Wait for **Validate profile** to report that the profile is ready, then press **Start**.
+5. Select the Origins realm to connect to: **US / UK (OUS)**, **Spain (OES)**, or **Brazil / Portugal (OBR)**. US / UK is the default.
+6. For a Steam-linked account, enable **Steam Login** for the profile and keep the Steam desktop client running and signed in. Standard email/password login remains available.
+7. Wait for **Validate profile** to report that the profile is ready, then press **Start**.
 
 Imported profiles remain local under the portable app's `clients/` folder and are reused on later launches.
 The selected realm persists in Shockless settings and controls the regional game/MUS endpoints, boot casts, external variables, external text, gamedata, and public API data used by later launches.
+Steam Login is opt-in and stored per profile. It requires the Windows Steam client and an Origins account already linked to Steam.
 
 ## Build From Source
 

@@ -565,9 +565,10 @@ function applyDarkenColorFilter(
 }
 
 /**
- * Materialize Director foreground/background colors for a known 1-bit source.
- * Color images already contain their resolved pixels; applying this ramp to
- * them again corrupts fields and other runtime-rendered images.
+ * Materialize Director foreground/background colors from the source's black
+ * and white endpoints. Runtime-composed images can be 32-bit while still
+ * serving as Director masks, so image depth is not the operation discriminator.
+ * Pixels that already carry authored colors remain unchanged.
  */
 function applyDirectorColorization(
   ctx: Canvas2D,
@@ -584,23 +585,15 @@ function applyDirectorColorization(
     const r = data[offset]!;
     const g = data[offset + 1]!;
     const b = data[offset + 2]!;
-    const lightness = (r + g + b) / (255 * 3);
-    if (foreColor && backColor) {
-      const dark = 1 - lightness;
-      data[offset] = Math.round((foreColor.r * dark) + (backColor.r * lightness));
-      data[offset + 1] = Math.round((foreColor.g * dark) + (backColor.g * lightness));
-      data[offset + 2] = Math.round((foreColor.b * dark) + (backColor.b * lightness));
-    } else if (foreColor) {
-      const dark = 1 - lightness;
-      data[offset] = Math.round((r * (1 - dark)) + (foreColor.r * dark));
-      data[offset + 1] = Math.round((g * (1 - dark)) + (foreColor.g * dark));
-      data[offset + 2] = Math.round((b * (1 - dark)) + (foreColor.b * dark));
-    } else if (backColor) {
-      const light = lightness;
-      data[offset] = Math.round((r * (1 - light)) + (backColor.r * light));
-      data[offset + 1] = Math.round((g * (1 - light)) + (backColor.g * light));
-      data[offset + 2] = Math.round((b * (1 - light)) + (backColor.b * light));
-    }
+    const replacement = r === 0 && g === 0 && b === 0
+      ? foreColor
+      : r === 255 && g === 255 && b === 255
+        ? backColor
+        : null;
+    if (!replacement) continue;
+    data[offset] = replacement.r;
+    data[offset + 1] = replacement.g;
+    data[offset + 2] = replacement.b;
   }
   ctx.putImageData(image, 0, 0);
 }
@@ -1411,9 +1404,8 @@ export class LingoImage implements LingoObjectLike {
           break;
       }
 
-      const sourceIsOneBit = source.depth === 1;
-      const colorizeFore = sourceIsOneBit && ink !== 41 ? foreColor : null;
-      const colorizeBg = sourceIsOneBit && bgColor && ink !== 33 && ink !== 36 && ink !== 41 ? bgColor : null;
+      const colorizeFore = ink !== 41 ? foreColor : null;
+      const colorizeBg = bgColor && ink !== 33 && ink !== 36 && ink !== 41 ? bgColor : null;
       applyDirectorColorization(stage.ctx, srcW, srcH, colorizeFore, colorizeBg);
 
       if (mask && mask.el) {

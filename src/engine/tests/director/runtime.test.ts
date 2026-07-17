@@ -1479,32 +1479,30 @@ describe("runtime property access", () => {
     }
   });
 
-  it("applies copyPixels #color foreground materialization to known 1-bit sources", () => {
+  it("materializes copyPixels foreground/background colors from 32-bit black and white endpoints", () => {
     withPixelCanvas(() => {
       const runtime = new Runtime();
-      const source = LingoImage.fromPaletteIndices(
-        2,
-        1,
-        new Uint8Array([1, 0]),
-        paletteTableForBitmapDepth("systemMac", 1),
-        symbol("systemMac"),
-        1,
-      );
+      const source = new LingoImage(2, 1, 32, undefined, { initWhite: false });
       const dest = new LingoImage(2, 1, 32);
+      source.setPixel(0, 0, new LingoColor(0, 0, 0));
+      source.setPixel(1, 0, new LingoColor(255, 255, 255));
 
       runtime.callMethod(dest, "copyPixels", [
         source,
         source.getRect(),
         source.getRect(),
-        LingoPropList.fromPairs([[symbol("color"), new LingoColor(255, 0, 0)]]),
+        LingoPropList.fromPairs([
+          [symbol("color"), new LingoColor(0xee, 0xee, 0xee)],
+          [symbol("bgColor"), new LingoColor(0x67, 0x94, 0xa7)],
+        ]),
       ]);
 
-      expect(dest.getPixel(0, 0).hex).toBe(0xff0000);
-      expect(dest.getPixel(1, 0).hex).toBe(0xffffff);
+      expect(dest.getPixel(0, 0).hex).toBe(0xeeeeee);
+      expect(dest.getPixel(1, 0).hex).toBe(0x6794a7);
     });
   });
 
-  it("does not recolor 32-bit source pixels during background-transparent keying", () => {
+  it("keeps copyPixels foreground colorization after background-transparent keying", () => {
     withPixelCanvas(() => {
       const runtime = new Runtime();
       const source = new LingoImage(2, 1, 32);
@@ -1521,7 +1519,7 @@ describe("runtime property access", () => {
         ]),
       ]);
 
-      expect(dest.getPixel(1, 0).hex).toBe(0x000000);
+      expect(dest.getPixel(1, 0).hex).toBe(0xffffff);
     });
   });
 
@@ -1545,6 +1543,27 @@ describe("runtime property access", () => {
 
       expect(dest.getPixel(0, 0).hex).toBe(0x6794a7);
       expect(dest.getPixel(1, 0).hex).toBe(0xeeeeee);
+    });
+  });
+
+  it("does not turn intermediate authored colors into a foreground/background ramp", () => {
+    withPixelCanvas(() => {
+      const runtime = new Runtime();
+      const source = new LingoImage(1, 1, 32, undefined, { initWhite: false });
+      const dest = new LingoImage(1, 1, 32, undefined, { initWhite: false });
+      source.setPixel(0, 0, new LingoColor(128, 96, 64));
+
+      runtime.callMethod(dest, "copyPixels", [
+        source,
+        source.getRect(),
+        source.getRect(),
+        LingoPropList.fromPairs([
+          [symbol("color"), new LingoColor(255, 0, 0)],
+          [symbol("bgColor"), new LingoColor(0, 0, 255)],
+        ]),
+      ]);
+
+      expect(dest.getPixel(0, 0).hex).toBe(0x806040);
     });
   });
 
